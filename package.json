@@ -1,6 +1,6 @@
 {
   "name": "lark-config",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "lark config module",
   "main": "index.js",
   "directories": {
@@ -25,5 +25,8 @@
   "bugs": {
     "url": "https://github.com/larkjs/lark-config/issues"
   },
-  "homepage": "https://github.com/larkjs/lark-config"
+  "homepage": "https://github.com/larkjs/lark-config",
+  "files":[
+    "index.js"
+  ]
 }
