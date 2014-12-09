@@ -5,7 +5,7 @@
 
 var path = require('path');
 var caller = require('caller');
-var dirname = path.dirname(caller());
+var dirname = require('app-root-path').toString();
 
 module.exports = function config(options) {
   var options = options || {};

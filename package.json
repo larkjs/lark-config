@@ -7,7 +7,7 @@
     "example": "examples"
   },
   "dependencies": {
-    "caller": "^1.0.0"
+    "app-root-path": "^1.0.0"
   },
   "devDependencies": {},
   "scripts": {
@@ -26,7 +26,7 @@
     "url": "https://github.com/larkjs/lark-config/issues"
   },
   "homepage": "https://github.com/larkjs/lark-config",
-  "files":[
+  "files": [
     "index.js"
   ]
 }

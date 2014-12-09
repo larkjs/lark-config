@@ -3,5 +3,5 @@
  */
 var config = require('..');
 
-console.log(config());
+console.log(config({directory:"examples/configs"}));
 
