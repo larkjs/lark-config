@@ -1,7 +1,0 @@
-{
-  "port": 3002,
-  "bootstrap": {
-    "enable": true,
-    "directory": "controllers"
-  }
-}

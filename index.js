@@ -4,26 +4,32 @@
 
 
 var path = require('path');
-var rootPath = require('app-root-path').toString();
+var root = require('app-root-path').toString();
 var fs = require('fs');
+var merge = require('merge');
 
-module.exports = function (app, options) {
-  if (!app || (app && !(typeof app.listen === 'function'))) {
-    throw new Error('you need pass app');
-  }
-  if (app.config) return;
+/**
+ * exports function
+ * @param options
+ * @returns {{}}
+ */
+module.exports = function (options) {
   var options = options || {};
   var env = options.env || process.env.NODE_ENV || 'development';
-  var directory = options.directory || 'configs';
-  var dirname = path.join(rootPath, directory, env + '.json');
-  if (!fs.existsSync(dirname)) {
-    throw new Error(env + ".json doesn't exist");
+  var directory = options.directory || 'config';
+  var configPath = path.join(root, directory);
+  var envPath = path.join(configPath, 'env', env + '.js');
+  var configs = {};
+  configs.environment = env;
+  // env config require
+  if (fs.existsSync(envPath)) {
+    configs = merge(configs, require(envPath));
   }
-  var configs = require(dirname);
-  app.configs = configs;
-  return function *config(next) {
-    if (this.config) return;
-    this.configs = configs;
-    yield next;
-  }
+  // other config require
+  fs.readdirSync(configPath).forEach(function (name) {
+    if (path.extname(name) === '.js') {
+      configs = merge(configs, require(path.join(configPath, name)));
+    }
+  });
+  return configs;
 };

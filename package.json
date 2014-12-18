@@ -1,22 +1,21 @@
 {
   "name": "lark-config",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "lark config module",
   "main": "index.js",
   "directories": {
     "example": "examples"
   },
   "dependencies": {
-    "app-root-path": "^1.0.0"
+    "app-root-path": "^1.0.0",
+    "merge": "^1.2.0"
   },
   "devDependencies": {
-    "koa": "^0.14.0",
     "mocha": "^2.0.1",
-    "should": "^4.4.1",
-    "supertest": "^0.15.0"
+    "should": "^4.4.1"
   },
   "scripts": {
-    "test": "NODE_ENV=test ./node_modules/.bin/mocha --harmony-generators --require should test/"
+    "test": "./node_modules/.bin/mocha --harmony-generators --require should test/"
   },
   "repository": {
     "type": "git",
