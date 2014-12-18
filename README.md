@@ -1,10 +1,23 @@
-lark-koa-config
+lark-config
 ===============
 
-lark config module
+config module for lark.js
 
 [![NPM version][npm-image]][npm-url]
 [![build status][travis-image]][travis-url]
+
+## useage
+```
+var config = require('..');
+
+var configs = config({
+  directory: "example/config" 
+});
+
+```
+directory form [rootPath](https://github.com/inxilpro/node-app-root-path)
+
+
 
 
 
