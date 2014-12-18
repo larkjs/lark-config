@@ -8,14 +8,11 @@
   },
   "dependencies": {
     "app-root-path": "^1.0.0",
-    "lark-router": "^0.1.0",
     "merge": "^1.2.0"
   },
   "devDependencies": {
-    "koa": "^0.14.0",
     "mocha": "^2.0.1",
-    "should": "^4.4.1",
-    "supertest": "^0.15.0"
+    "should": "^4.4.1"
   },
   "scripts": {
     "test": "./node_modules/.bin/mocha --harmony-generators --require should test/"
