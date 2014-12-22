@@ -11,7 +11,9 @@ var config = require('..');
 var expect = {
   environment: 'development',
   port: 3000,
-  views: {engine: 'handlebars', layout: 'layouts'}
+  mvc: { path: 'models' },
+  travis: { language: 'node_js', node_js: [ '0.11.13', '0.11.14' ] },
+  views: { engine: 'handlebars', layout: 'layouts' }
 };
 
 describe('config', function () {
