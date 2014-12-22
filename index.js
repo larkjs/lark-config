@@ -26,10 +26,12 @@ module.exports = function (options) {
     configs = merge(configs, require(envPath));
   }
   // other config require
-  fs.readdirSync(configPath).forEach(function (name) {
-    if (path.extname(name) === '.js') {
-      configs = merge(configs, require(path.join(configPath, name)));
-    }
-  });
+  if (fs.existsSync(configPath)) {
+    fs.readdirSync(configPath).forEach(function (name) {
+      if (path.extname(name) === '.js') {
+        configs = merge(configs, require(path.join(configPath, name)));
+      }
+    });
+  }
   return configs;
 };

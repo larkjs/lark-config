@@ -15,7 +15,7 @@ var expect = {
 };
 
 describe('config', function () {
-  it('configs should equal expect"', function (done) {
+  it('should equal expect"', function (done) {
     var configs = config({
       directory: "example/config"
     });
