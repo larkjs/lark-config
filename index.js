@@ -7,6 +7,7 @@ var path = require('path');
 var root = require('app-root-path').toString();
 var fs = require('fs');
 var merge = require('merge');
+var yaml = require('js-yaml');
 
 /**
  * exports function
@@ -26,10 +27,28 @@ module.exports = function (options) {
     configs = merge(configs, require(envPath));
   }
   // other config require
-  fs.readdirSync(configPath).forEach(function (name) {
-    if (path.extname(name) === '.js') {
-      configs = merge(configs, require(path.join(configPath, name)));
-    }
-  });
+  if (fs.existsSync(configPath)) {
+    fs.readdirSync(configPath).forEach(function (name) {
+      switch (path.extname(name)) {
+        case '.js':
+          configs = merge(configs, require(path.join(configPath, name)));
+          break;
+        case '.json':
+          var basename = path.basename(name, '.json');
+          var content = require(path.join(configPath, name));
+          var conf = {};
+          conf[basename] = content;
+          configs = merge(configs, conf);
+          break;
+        case '.yml':
+          var basename = path.basename(name, '.yml');
+          var content = yaml.safeLoad(fs.readFileSync(path.join(configPath, name), 'utf8'));
+          var conf = {};
+          conf[basename] = content;
+          configs = merge(configs, conf);
+          break;
+      }
+    });
+  }
   return configs;
 };
