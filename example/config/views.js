@@ -1,5 +1,5 @@
 
-module.exports.views = {
+module.exports = {
   engine: 'handlebars',
   layout: 'layouts'
 };
