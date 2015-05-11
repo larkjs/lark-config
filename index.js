@@ -49,5 +49,8 @@ module.exports = function (options) {
 };
 
 function addConfig(configs, name, config) {
+    if (config[name] && Object.keys(config).length === 1) {
+        config = config[name];
+    }
     configs[name] = merge(configs[name] || {}, config);
 }
