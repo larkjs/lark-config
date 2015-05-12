@@ -15,10 +15,6 @@ var configs = config({
 });
 
 ```
-directory form [rootPath](https://github.com/inxilpro/node-app-root-path)
-
-
-
 
 
 [npm-image]: https://img.shields.io/npm/v/lark-config.svg?style=flat-square

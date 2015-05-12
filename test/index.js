@@ -6,6 +6,9 @@
 
 'use strict';
 
+//To work around mocha test
+process.mainModule = module;
+
 var config = require('..');
 
 var expect = {
@@ -19,7 +22,7 @@ var expect = {
 describe('config', function () {
   it('should equal expect"', function (done) {
     var configs = config({
-      directory: "example/config"
+      directory: "../example/config"
     });
     JSON.stringify(configs).should.equal(JSON.stringify(expect));
     done();
