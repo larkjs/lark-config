@@ -4,7 +4,7 @@
 
 
 var path = require('path');
-var root = require('app-root-path').toString();
+var root = path.dirname(process.mainModule.filename);
 var fs = require('fs');
 var merge = require('merge');
 var yaml = require('js-yaml');
