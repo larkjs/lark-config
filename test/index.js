@@ -12,11 +12,11 @@ process.mainModule = module;
 var config = require('..');
 
 var expect = {
-  environment: 'development',
   port: 3000,
   mvc: { path: 'models' },
   travis: { language: 'node_js', node_js: [ '0.11.13', '0.11.14' ] },
-  views: { engine: 'handlebars', layout: 'layouts' }
+  views: { engine: 'handlebars', layout: 'layouts' },
+  environment: 'development',
 };
 
 describe('config', function () {
@@ -24,6 +24,7 @@ describe('config', function () {
     var configs = config({
       directory: "../example/config"
     });
+    delete configs.configPath;
     JSON.stringify(configs).should.equal(JSON.stringify(expect));
     done();
   });
