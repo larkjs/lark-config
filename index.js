@@ -21,7 +21,6 @@ module.exports = function (options) {
   var configPath = path.join(root, directory);
   var envPath = path.join(configPath, 'env', env + '.js');
   var configs = {};
-  configs.environment = env;
   // env config require
   if (fs.existsSync(envPath)) {
     configs = merge(configs, require(envPath));
@@ -45,6 +44,8 @@ module.exports = function (options) {
       }
     });
   }
+  configs.environment = env;
+  configs.configPath  = configPath;
   return configs;
 };
 
