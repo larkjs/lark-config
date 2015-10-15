@@ -1,21 +1,21 @@
 /**
  * Created by mdemo on 14/12/8.
  */
+'use strict';
 
-
-const path = require('path');
-const root = path.dirname(process.mainModule.filename);
-const fs = require('fs');
+const path  = require('path');
+const root  = path.dirname(process.mainModule.filename);
+const fs    = require('fs');
 const merge = require('merge');
-const yaml = require('js-yaml');
+const yaml  = require('js-yaml');
 
 /**
  * exports function
  * @param options
  * @returns {{}}
  */
-module.exports = function (options) {
-  let options = options || {};
+module.exports = (options) => {
+  options = options || {};
   let env = options.env || process.env.NODE_ENV || 'development';
   let directory = options.directory || 'config';
   let configPath = path.join(root, directory);
@@ -27,18 +27,19 @@ module.exports = function (options) {
   }
   // other config require
   if (fs.existsSync(configPath)) {
-    fs.readdirSync(configPath).forEach(function (name) {
+    fs.readdirSync(configPath).forEach((name) => {
       let basename = path.basename(name, path.extname(name));
+      let content;
       switch (path.extname(name)) {
         case '.js':
           addConfig(configs, basename, require(path.join(configPath, name)));
           break;
         case '.json':
-          let content = require(path.join(configPath, name));
+          content = require(path.join(configPath, name));
           addConfig(configs, basename, content);
           break;
         case '.yml':
-          let content = yaml.safeLoad(fs.readFileSync(path.join(configPath, name), 'utf8'));
+          content = yaml.safeLoad(fs.readFileSync(path.join(configPath, name), 'utf8'));
           addConfig(configs, basename, content);
           break;
       }
