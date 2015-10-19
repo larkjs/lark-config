@@ -21,11 +21,8 @@ module.exports = (options) => {
   let configPath = path.join(root, directory);
   let envPath = path.join(configPath, 'env', env + '.js');
   let configs = {};
-  // env config require
-  if (fs.existsSync(envPath)) {
-    configs = merge(configs, require(envPath));
-  }
-  // other config require
+  // Load configs defined under config path 
+  // Each file is a config
   if (fs.existsSync(configPath)) {
     fs.readdirSync(configPath).forEach((name) => {
       let basename = path.basename(name, path.extname(name));
@@ -45,11 +42,23 @@ module.exports = (options) => {
       }
     });
   }
+  // env config require
+  // env config should be in high priority, so overwrite configs with env configs
+  if (fs.existsSync(envPath)) {
+    configs = merge(configs, require(envPath));
+  }
   configs.environment = env;
   configs.configPath  = configPath;
   return configs;
 };
 
+/**
+ * Add a config into configs
+ * @param {Object} configs : The config set, contains all configs
+ * @param {String} name : The name of the config to add into configs
+ * @param {Object} config : The config to add into configs
+ * @return {Object} configs
+ **/
 function addConfig(configs, name, config) {
     if (name == 'index'){
         configs = merge(configs, config)
@@ -59,4 +68,5 @@ function addConfig(configs, name, config) {
         }
         configs[name] = merge(configs[name] || {}, config);
     }
+    return configs;
 }
