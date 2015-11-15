@@ -29,9 +29,12 @@ export default (configPath, options = {}) => {
     }
     else if ('string' === typeof configPath) {
         debug('Config: first param is config\'s path, use it to load configs');
-        let callerPath = caller();
-        debug('Config: caller is ' + callerPath);
-        configPath = path.join(path.dirname(callerPath), configPath);
+        if (!path.isAbsolute(configPath)) {
+            debug('Config: not absolute path');
+            let callerPath = caller();
+            debug('Config: caller is ' + callerPath);
+            configPath = path.join(path.dirname(callerPath), configPath);
+        }
         debug('Config: config path is ' + configPath);
         config = loadConfigByPath(configPath);
     }

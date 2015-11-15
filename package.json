@@ -1,7 +1,7 @@
 {
   "name": "lark-config",
   "version": "1.0.0",
-  "version-node-v5": "0.6.0",
+  "version-node-v5": "0.6.1",
   "description": "lark config module",
   "main": "index.js",
   "engines": {
