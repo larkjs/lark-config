@@ -50,8 +50,8 @@ function removeBabel (obj) {
 pkg = removeBabel(pkg);
 
 console.log("Starting to build ...");
+exec("cp -r " + appPath + '/* ' + toPath + '/');
 exec(appPath + '/node_modules/.bin/babel --ignore node_modules ' + appPath + ' -d ' + toPath);
-exec("cp -r " + appPath + '/bin ' + toPath + '/');
 exec("rm " + toPath + "/bin/build");
 fs.writeFileSync(toPath + '/package.json', JSON.stringify(pkg, null, 4));
 console.log("Done!");
