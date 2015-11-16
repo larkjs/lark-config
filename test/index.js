@@ -66,7 +66,7 @@ describe('config', function () {
             locale: 'en',
         });
         delete configs.configPath;
-        eql(configs, expect_dev_en).should.be.true;
+        eql(configs, expect_dev_en).should.be.exactly(true);
         done();
     });
 
@@ -76,7 +76,7 @@ describe('config', function () {
             locale: 'zhCN',
         });
         delete configs.configPath;
-        eql(configs, expect_prod_zhCN).should.be.true;
+        eql(configs, expect_prod_zhCN).should.be.exactly(true);
         done();
     });
 });
