@@ -39,8 +39,8 @@ export default (configPath, options = {}) => {
         config = loadConfigByPath(configPath);
     }
     if (options && options instanceof Object) {
-        debug("Config: overriding...");
-        config = override(config, options);
+        debug("Config: config object is ok");
+        config = overwrite(config, options);
     }
     config.configPath = configPath;
     return config;
@@ -122,27 +122,27 @@ function loadConfigByFile(filePath) {
 };
 
 /**
- * Override configs with options
+ * Overwrite configs with options
  **/
-function override (config, options) {
-    debug("Config: overriding...");
+function overwrite (config, options) {
+    debug("Config: overwriting start");
     if (!(config instanceof Object) || !(options instanceof Object)) {
         throw new Error("Both config and options must be Object");
     }
-    let overridings = [];
+    let overwritings = [];
     for (let name in options) {
-        let overriding;
+        let overwriting;
         try {
-            overriding = config[name][options[name]];
+            overwriting = config[name][options[name]];
         }
         catch (e) {
-            console.log("Warning: can not override config " + name + ", error message : " + e.message);
+            console.log("Warning: can not overwrite config " + name + ", error message : " + e.message);
         }
         delete config[name];
-        overridings.push(overriding);
+        overwritings.push(overwriting);
     }
-    for (let overriding of overridings) {
-        config = extend(true, config, overriding);
+    for (let overwriting of overwritings) {
+        config = extend(true, config, overwriting);
     }
     return config;
 }
