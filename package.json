@@ -1,10 +1,8 @@
 {
   "name": "lark-config",
-  "version": "1.0.0",
-  "version_nodev5": "1.0.0",
-  "version_es5": "0.7.0",
+  "version": "1.0.1",
   "description": "lark config module",
-  "main": "index.js",
+  "main": "loader.js",
   "engines": {
     "node": ">= 5.0.0"
   },
@@ -46,7 +44,9 @@
     "should": "^4.4.1"
   },
   "scripts": {
-    "test": "./node_modules/.bin/mocha --require should test/"
+    "_test":    "NODE_ENV=testing ./node_modules/.bin/mocha --require should test/",
+    "test":     "cd release/nodev5 && rm -rf node_modules && ln -s ../../node_modules node_modules && npm test",
+    "test_es5": "cd release/es5    && rm -rf node_modules && ln -s ../../node_modules node_modules && npm test"
   },
   "repository": {
     "type": "git",
