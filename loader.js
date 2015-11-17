@@ -3,7 +3,7 @@
  **/
 'use strict';
 
-var debug = require('debug')('lark-bootstrap');
+var debug = require('debug')('lark-config');
 
 debug("Loader: check node version");
 
