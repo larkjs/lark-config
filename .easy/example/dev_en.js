@@ -14,13 +14,13 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  * Example of lark-config
  **/
 
-var debug = (0, _debug3.default)('lark-config');
+const debug = (0, _debug3.default)('lark-config');
 
 debug('Example: set app.js as the main module');
 process.mainModule = module;
 
 debug('Example: loading configs');
-var configs = (0, _2.default)('configs', {
+let configs = (0, _2.default)('configs', {
   env: 'development',
   locale: 'en'
 });

@@ -11,10 +11,6 @@ var _debug2 = require('debug');
 
 var _debug3 = _interopRequireDefault(_debug2);
 
-var _caller = require('caller');
-
-var _caller2 = _interopRequireDefault(_caller);
-
 var _extend = require('extend');
 
 var _extend2 = _interopRequireDefault(_extend);
@@ -33,8 +29,8 @@ var _jsYaml2 = _interopRequireDefault(_jsYaml);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var debug = (0, _debug3.default)('lark-config');
-var root = _path2.default.dirname(process.mainModule.filename);
+const debug = (0, _debug3.default)('lark-config');
+const root = _path2.default.dirname(process.mainModule.filename);
 
 /**
  * exports function
@@ -44,10 +40,10 @@ var root = _path2.default.dirname(process.mainModule.filename);
  */
 
 exports.default = function (configPath) {
-    var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+    let options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
 
     debug('Config: start');
-    var config = null;
+    let config = null;
     if (configPath instanceof Object) {
         debug('Config: first param is config itself, use it directly');
         config = configPath;
@@ -56,9 +52,9 @@ exports.default = function (configPath) {
         debug('Config: first param is config\'s path, use it to load configs');
         if (!_path2.default.isAbsolute(configPath)) {
             debug('Config: not absolute path');
-            var callerPath = (0, _caller2.default)();
-            debug('Config: caller is ' + callerPath);
-            configPath = _path2.default.join(_path2.default.dirname(callerPath), configPath);
+            let appPath = process.mainModule.filename;
+            debug('Config: app path is ' + appPath);
+            configPath = _path2.default.join(_path2.default.dirname(appPath), configPath);
         }
         debug('Config: config path is ' + configPath);
         config = loadConfigByPath(configPath);
@@ -82,41 +78,51 @@ function loadConfigByPath(configPath) {
     if (!_fs2.default.existsSync(configPath)) {
         throw new Error('Can not read config path ' + configPath);
     }
-    var config = {};
-    var nameList = _fs2.default.readdirSync(configPath);
-    for (var _iterator = nameList, _isArray = Array.isArray(_iterator), _i = 0, _iterator = _isArray ? _iterator : _iterator[Symbol.iterator]();;) {
-        var _ref;
+    let config = {};
+    let nameList = _fs2.default.readdirSync(configPath);
+    var _iteratorNormalCompletion = true;
+    var _didIteratorError = false;
+    var _iteratorError = undefined;
 
-        if (_isArray) {
-            if (_i >= _iterator.length) break;
-            _ref = _iterator[_i++];
-        } else {
-            _i = _iterator.next();
-            if (_i.done) break;
-            _ref = _i.value;
+    try {
+        for (var _iterator = nameList[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+            let name = _step.value;
+
+            let filePath = _path2.default.join(configPath, name);
+            debug('Config: loading ' + filePath);
+            let stat = _fs2.default.statSync(filePath);
+            let type = null;
+            if (stat.isFile()) {
+                name = _path2.default.basename(filePath, _path2.default.extname(filePath));
+                type = 'file';
+            } else if (stat.isDirectory()) {
+                type = 'directory';
+            } else {
+                continue;
+            }
+            debug('Config: type is ' + type);
+            try {
+                config[name] = type === 'file' ? loadConfigByFile(filePath) : loadConfigByPath(filePath);
+            } catch (e) {
+                console.warn('Warning: failed to load config by ' + type + ' path ' + filePath + ' error message : ' + e.message);
+            }
         }
-
-        var name = _ref;
-
-        var filePath = _path2.default.join(configPath, name);
-        debug('Config: loading ' + filePath);
-        var stat = _fs2.default.statSync(filePath);
-        var type = null;
-        if (stat.isFile()) {
-            name = _path2.default.basename(filePath, _path2.default.extname(filePath));
-            type = 'file';
-        } else if (stat.isDirectory()) {
-            type = 'directory';
-        } else {
-            continue;
-        }
-        debug('Config: type is ' + type);
+    } catch (err) {
+        _didIteratorError = true;
+        _iteratorError = err;
+    } finally {
         try {
-            config[name] = type === 'file' ? loadConfigByFile(filePath) : loadConfigByPath(filePath);
-        } catch (e) {
-            console.warn('Warning: failed to load config by ' + type + ' path ' + filePath + ' error message : ' + e.message);
+            if (!_iteratorNormalCompletion && _iterator.return) {
+                _iterator.return();
+            }
+        } finally {
+            if (_didIteratorError) {
+                throw _iteratorError;
+            }
         }
-    };
+    }
+
+    ;
     debug("Config: load by config path done!");
     return config;
 }
@@ -129,14 +135,14 @@ function loadConfigByFile(filePath) {
     if (!_fs2.default.existsSync(filePath)) {
         throw new Error('Can not read config path ' + filePath);
     }
-    var stat = _fs2.default.statSync(filePath);
+    let stat = _fs2.default.statSync(filePath);
     if (!stat.isFile()) {
         throw new Error('File ' + filePath + ' must be a file');
     }
     debug("Config: file validation ok!");
-    var extname = _path2.default.extname(filePath);
-    var basename = _path2.default.basename(filePath, extname);
-    var content = undefined;
+    let extname = _path2.default.extname(filePath);
+    let basename = _path2.default.basename(filePath, extname);
+    let content;
     debug("Config: extname is " + extname);
     switch (extname) {
         case '.js':
@@ -165,9 +171,9 @@ function overwrite(config, options) {
     if (!(config instanceof Object) || !(options instanceof Object)) {
         throw new Error("Both config and options must be Object");
     }
-    var overwritings = [];
-    for (var name in options) {
-        var overwriting = undefined;
+    let overwritings = [];
+    for (let name in options) {
+        let overwriting;
         try {
             overwriting = config[name][options[name]];
         } catch (e) {
@@ -176,22 +182,31 @@ function overwrite(config, options) {
         delete config[name];
         overwritings.push(overwriting);
     }
-    for (var _iterator2 = overwritings, _isArray2 = Array.isArray(_iterator2), _i2 = 0, _iterator2 = _isArray2 ? _iterator2 : _iterator2[Symbol.iterator]();;) {
-        var _ref2;
+    var _iteratorNormalCompletion2 = true;
+    var _didIteratorError2 = false;
+    var _iteratorError2 = undefined;
 
-        if (_isArray2) {
-            if (_i2 >= _iterator2.length) break;
-            _ref2 = _iterator2[_i2++];
-        } else {
-            _i2 = _iterator2.next();
-            if (_i2.done) break;
-            _ref2 = _i2.value;
+    try {
+        for (var _iterator2 = overwritings[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+            let overwriting = _step2.value;
+
+            config = (0, _extend2.default)(true, config, overwriting);
         }
-
-        var overwriting = _ref2;
-
-        config = (0, _extend2.default)(true, config, overwriting);
+    } catch (err) {
+        _didIteratorError2 = true;
+        _iteratorError2 = err;
+    } finally {
+        try {
+            if (!_iteratorNormalCompletion2 && _iterator2.return) {
+                _iterator2.return();
+            }
+        } finally {
+            if (_didIteratorError2) {
+                throw _iteratorError2;
+            }
+        }
     }
+
     return config;
 }
 
