@@ -10,6 +10,8 @@ import eql      from 'deep-eql';
 import extend   from 'extend';
 import should   from 'should';
 
+process.mainModule = module;
+
 const expect_base = {
     a: {
         'key-a': 'value-a',

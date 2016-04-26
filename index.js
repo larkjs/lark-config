@@ -4,7 +4,6 @@
 'use strict';
 
 import _debug from 'debug';
-import caller from 'caller';
 import extend from 'extend';
 import fs     from 'fs';
 import path   from 'path';
@@ -31,9 +30,9 @@ export default (configPath, options = {}) => {
         debug('Config: first param is config\'s path, use it to load configs');
         if (!path.isAbsolute(configPath)) {
             debug('Config: not absolute path');
-            let callerPath = caller();
-            debug('Config: caller is ' + callerPath);
-            configPath = path.join(path.dirname(callerPath), configPath);
+            let appPath = process.mainModule.filename;
+            debug('Config: app path is ' + appPath);
+            configPath = path.join(path.dirname(appPath), configPath);
         }
         debug('Config: config path is ' + configPath);
         config = loadConfigByPath(configPath);
