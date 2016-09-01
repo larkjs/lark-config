@@ -9,7 +9,7 @@ This is a tool to load configs from files
 ## How to install
 
 ```
-$ npm install --save lark-log
+$ npm install --save lark-config
 ```
 
 ## How to use
@@ -31,7 +31,7 @@ We supposed you've written some configs in some files under a diretory `configs`
 
 Then load all this files in configs like this:
 ```
-const loadConfig = requrie('lark-log');
+const loadConfig = requrie('lark-config');
 
 const myConfigs = loadConfig('./configs');
 
