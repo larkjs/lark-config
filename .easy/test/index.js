@@ -23,7 +23,9 @@ var _should2 = _interopRequireDefault(_should);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var expect_base = {
+process.mainModule = module;
+
+const expect_base = {
     a: {
         'key-a': 'value-a',
         'key-b': {
@@ -54,7 +56,7 @@ var expect_base = {
     }
 };
 
-var expect_dev_en = (0, _extend2.default)(true, (0, _extend2.default)(true, {}, expect_base), {
+const expect_dev_en = (0, _extend2.default)(true, (0, _extend2.default)(true, {}, expect_base), {
     f: "value-f-dev",
     locales: {
         "welcome": "welcome",
@@ -62,7 +64,7 @@ var expect_dev_en = (0, _extend2.default)(true, (0, _extend2.default)(true, {}, 
     }
 });
 
-var expect_prod_zhCN = (0, _extend2.default)(true, (0, _extend2.default)(true, {}, expect_base), {
+const expect_prod_zhCN = (0, _extend2.default)(true, (0, _extend2.default)(true, {}, expect_base), {
     f: "value-f-prod",
     locales: {
         "welcome": "欢迎",
@@ -72,7 +74,7 @@ var expect_prod_zhCN = (0, _extend2.default)(true, (0, _extend2.default)(true, {
 
 describe('config', function () {
     it('should equal expect with env dev and locale en', function (done) {
-        var configs = (0, _2.default)('../example/configs', {
+        let configs = (0, _2.default)('../example/configs', {
             env: 'development',
             locale: 'en'
         });
@@ -82,7 +84,7 @@ describe('config', function () {
     });
 
     it('should equal expect with env prod and locale zhCN', function (done) {
-        var configs = (0, _2.default)('../example/configs', {
+        let configs = (0, _2.default)('../example/configs', {
             env: 'production',
             locale: 'zhCN'
         });

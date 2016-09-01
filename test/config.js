@@ -1,14 +1,16 @@
 /**
- * lark-config - index.js
+ * lark-config - test/index.js
  * Copyright(c) 2014 larkjs-team(https://github.com/larkjs)
  * MIT Licensed
  */
 'use strict';
 
-import config   from '..';
-import eql      from 'deep-eql';
-import extend   from 'extend';
-import should   from 'should';
+const config = require('..');
+const eql    = require('deep-eql');
+const extend = require('extend');
+const should = require('should');
+
+process.mainModule = module;
 
 const expect_base = {
     a: {
@@ -59,8 +61,8 @@ const expect_prod_zhCN = extend(true, extend(true, {}, expect_base), {
     },
 });
 
-describe('config', function () {
-    it('should equal expect with env dev and locale en', function (done) {
+describe('config', () => {
+    it('should equal expect with env dev and locale en', done => {
         let configs = config('../example/configs', {
             env: 'development',
             locale: 'en',
@@ -70,13 +72,33 @@ describe('config', function () {
         done();
     });
 
-    it('should equal expect with env prod and locale zhCN', function (done) {
+    it('should equal expect with env prod and locale zhCN', done => {
         let configs = config('../example/configs', {
             env: 'production',
             locale: 'zhCN',
         });
         delete configs.configPath;
         eql(configs, expect_prod_zhCN).should.be.exactly(true);
+        done();
+    });
+
+    it('should equal using object as config', done => {
+        let configs = config({
+            a: 'a',
+            b: 'b',
+            caseA: {
+                lower: {a: "a"},
+                upper: {a: "A"},
+            }
+        }, {
+            caseA: 'upper',
+            caseB: 'no use config',
+        });
+        should(configs.configPath).be.exactly(null);
+        delete configs.configPath;
+
+        eql(configs, {a: 'A', b: 'b'}).should.be.exactly(true);
+ 
         done();
     });
 });

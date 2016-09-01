@@ -1,17 +1,17 @@
 /**
- * Created by mdemo on 14/12/8.
+ * Config loading module
  */
 'use strict';
 
-import _debug from 'debug';
-import caller from 'caller';
-import extend from 'extend';
-import fs     from 'fs';
-import path   from 'path';
-import yaml   from 'js-yaml';
+const $       = require('lodash');
+const debug   = require('debug')('lark-config.index');
+const assert  = require('assert');
+const extend  = require('extend');
+const fs      = require('fs');
+const path    = require('path');
+const yaml    = require('js-yaml');
 
-const debug = _debug('lark-config');
-const root  = path.dirname(process.mainModule.filename);
+debug('loading ...');
 
 /**
  * exports function
@@ -19,29 +19,24 @@ const root  = path.dirname(process.mainModule.filename);
  * @param string
  * @returns {{}}
  */
-export default (configPath, options = {}) => {
-    debug('Config: start');
-    let config = null;
-    if (configPath instanceof Object) {
-        debug('Config: first param is config itself, use it directly');
-        config = configPath;
-        configPath = null;
-    }
-    else if ('string' === typeof configPath) {
-        debug('Config: first param is config\'s path, use it to load configs');
-        if (!path.isAbsolute(configPath)) {
-            debug('Config: not absolute path');
-            let callerPath = caller();
-            debug('Config: caller is ' + callerPath);
-            configPath = path.join(path.dirname(callerPath), configPath);
-        }
-        debug('Config: config path is ' + configPath);
+function main (configPath, options = {}) {
+    debug('main() called ...');
+
+    let config = $.cloneDeep(configPath);
+    if ('string' === typeof configPath) {
+        debug('using path to load config ...');
+        configPath = path.isAbsolute(configPath) ? configPath : path.join(path.dirname(process.mainModule.filename), configPath);
         config = loadConfigByPath(configPath);
     }
-    if (options && options instanceof Object) {
-        debug("Config: config object is ok");
-        config = overwrite(config, options);
+    else {
+        configPath = null;
     }
+
+    assert(config instanceof Object, 'Config must be an object or a valid config path');
+    assert(options instanceof Object, 'Options must be an object');
+
+    config = overwrite(config, options);
+
     config.configPath = configPath;
     return config;
 }
@@ -52,7 +47,7 @@ export default (configPath, options = {}) => {
  * file content will be regard as config contents
  */
 function loadConfigByPath (configPath) {
-    debug("Config: start to load by config path : " + configPath);
+    debug('loadConfigByPath() called, config path is ' + configPath);
     if (!fs.existsSync(configPath)) {
         throw new Error('Can not read config path ' + configPath);
     }
@@ -60,7 +55,7 @@ function loadConfigByPath (configPath) {
     let nameList = fs.readdirSync(configPath);
     for (let name of nameList) {
         let filePath = path.join(configPath, name);
-        debug('Config: loading ' + filePath);
+        debug('loading ' + filePath);
         let stat = fs.statSync(filePath);
         let type = null;
         if (stat.isFile()) {
@@ -73,7 +68,7 @@ function loadConfigByPath (configPath) {
         else {
             continue;
         }
-        debug('Config: type is ' + type);
+        debug('type is ' + type);
         try {
             config[name] = type === 'file' ? loadConfigByFile(filePath) : loadConfigByPath(filePath);
         }
@@ -81,7 +76,7 @@ function loadConfigByPath (configPath) {
             console.warn('Warning: failed to load config by ' + type + ' path ' + filePath + ' error message : ' + e.message);
         }
     };
-    debug("Config: load by config path done!");
+    debug("loadConfigByPath() done!");
     return config;
 }
 
@@ -89,35 +84,27 @@ function loadConfigByPath (configPath) {
  * Load config by a file name
  **/
 function loadConfigByFile(filePath) {
-    debug("Config: start to load by file name : " + filePath);
-    if (!fs.existsSync(filePath)) {
-        throw new Error('Can not read config path ' + filePath);
-    }
-    let stat = fs.statSync(filePath);
-    if (!stat.isFile()) {
-        throw new Error('File ' + filePath + ' must be a file');
-    }
-    debug("Config: file validation ok!");
+    debug("loadConfigByFile() called, file path is " + filePath);
+    assert(fs.statSync(filePath).isFile(), 'Target [' + filePath + '] must be a file');
+
+    debug("file validation ok!");
     let extname   = path.extname(filePath);
     let basename  = path.basename(filePath, extname);
     let content;
-    debug("Config: extname is " + extname);
+    debug("extname is " + extname);
     switch (extname) {
         case '.js': 
-            debug("Config: load .js with require");
-            content = require(filePath).default;
-            break;
         case '.json': 
-            debug("Config: load .json with require");
+            debug("load .js/.json with require");
             content = require(filePath);
             break;
         case '.yaml': 
         case '.yml': 
-            debug("Config: load .yaml/.yml with yaml");
+            debug("load .yaml/.yml with yaml");
             content = yaml.safeLoad(fs.readFileSync(filePath, 'utf8'));
             break;
     }
-    debug("Config: load ok!");
+    debug("load ok!");
     return content;
 };
 
@@ -126,18 +113,16 @@ function loadConfigByFile(filePath) {
  **/
 function overwrite (config, options) {
     debug("Config: overwriting start");
-    if (!(config instanceof Object) || !(options instanceof Object)) {
-        throw new Error("Both config and options must be Object");
-    }
+    assert(config instanceof Object, 'Config must be an object or a valid config path');
+    assert(options instanceof Object, 'Options must be an object');
+
     let overwritings = [];
     for (let name in options) {
+        if (!config[name]) {
+            continue;
+        }
         let overwriting;
-        try {
-            overwriting = config[name][options[name]];
-        }
-        catch (e) {
-            console.log("Warning: can not overwrite config " + name + ", error message : " + e.message);
-        }
+        overwriting = config[name][options[name]];
         delete config[name];
         overwritings.push(overwriting);
     }
@@ -148,3 +133,4 @@ function overwrite (config, options) {
 }
 
 debug('Config: loaded');
+module.exports = main;

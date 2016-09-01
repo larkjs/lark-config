@@ -1,18 +1,17 @@
 /**
  * Example of lark-config
  **/
-import config   from '..';
-import _debug   from 'debug';
-const debug     = _debug('lark-config');
+const config = require('..');
+const debug  = require('debug')('lark-config.examples');
 
-debug('Example: set app.js as the main module');
+debug('set app.js as the main module');
 process.mainModule = module;
 
-debug('Example: loading configs');
+debug('loading configs');
 let configs = config('configs', {
     env: 'production',
     locale: 'zhCN',
 });
 
-debug('Example: print configs');
+debug('print configs');
 console.log(configs);
