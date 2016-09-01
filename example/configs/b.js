@@ -1,4 +1,4 @@
-export default {
+module.exports = {
     "key-b": "content-b",
     "key-c": {
         "key-c-1": "content-c-1",
