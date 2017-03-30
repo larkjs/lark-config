@@ -21,10 +21,12 @@ const config = new Config('configs');
 
 This will load all files (.js, .json, .yaml, .yml) in directory 'configs'.
 
-Then you can easily get a config value:
+Then you can easily get/check/remove a config by path:
 
 ```
-config.get("path/to/file/foo/bar");  // nearly same as require('path/to/file').foo.bar
+config.get("path/to/file/foo/bar");       // nearly same as require('path/to/file').foo.bar
+config.has("path/to/file/foo/bar");
+config.remove("path/to/file/foo/bar");
 ```
 
 
