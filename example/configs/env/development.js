@@ -1,3 +1,3 @@
 module.exports = {
-    f: "value-f-dev"
+    f: 'value-f-dev'
 };

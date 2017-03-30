@@ -1,3 +1,3 @@
 module.exports = {
-    "key-e": "content-e"
-}
+    'key-e': 'content-e'
+};
