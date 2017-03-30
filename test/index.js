@@ -24,4 +24,15 @@ describe('config loaded from directory', () => {
         config.get('d/e/key-e').should.be.exactly('content-e');
         done();
     });
+    it('should return modified config after been set', (done) => {
+        config.set('a/key-a', 'value-a-modified');
+        config.get('a').should.have.property('key-a', 'value-a-modified');
+        done();
+    });
+    it('should return modified config after been set', (done) => {
+        config.remove('a/key-a');
+        config.get('a').should.not.have.property('key-a');
+        config.has('a/key-a').should.not.be.ok;
+        done();
+    });
 });
