@@ -3,6 +3,7 @@ lark-config
 
 [![NPM version][npm-image]][npm-url]
 [![build status][travis-image]][travis-url]
+[![Test coverage][coveralls-image]][coveralls-url]
 
 This is a tool to load configs from files
 
@@ -14,57 +15,16 @@ $ npm install --save lark-config
 
 ## How to use
 
-We supposed you've written some configs in some files under a diretory `configs`
 ```
-// system.json
-{
-    "port": 3000,
-    "env": "development",
-}
-
-// log.json
-{
-    "level": 3,
-    ...
-}
+const config = new Config('configs');
 ```
 
-Then load all this files in configs like this:
-```
-const loadConfig = requrie('lark-config');
+This will load all files (.js, .json, .yaml, .yml) in directory 'configs'.
 
-const myConfigs = loadConfig('./configs');
-
-/* myConfigs will be
-{
-    system: {
-        port: 3000,
-        env: "development"
-    },
-    log: {
-        level: 3
-    },
-    configPath: 'configs'
-}
-*/
+Then you can easily get a config value:
 
 ```
-
-If you want to switch configs with env, you can use `optiosn` as the 2nd param
-```
-const myConfigs = loadConfig('./configs', {
-    env: 'production'
-});
-```
-In this case, you should make a directory `env` with some files named just as the candidate values, like:
-```
-// env/production.json
-{
-    system: {
-        port: 80,
-        env: "production"
-    }
-}
+config.get("path/to/file/foo/bar");  // nearly same as require('path/to/file').foo.bar
 ```
 
 
@@ -72,3 +32,5 @@ In this case, you should make a directory `env` with some files named just as th
 [npm-url]: https://npmjs.org/package/lark-config
 [travis-image]: https://img.shields.io/travis/larkjs/lark-config/master.svg?style=flat-square
 [travis-url]: https://travis-ci.org/larkjs/lark-config
+[coveralls-image]: https://img.shields.io/codecov/c/github/larkjs/lark-config.svg?style=flat-square
+[coveralls-url]: https://codecov.io/github/larkjs/lark-config?branch=master
