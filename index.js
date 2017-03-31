@@ -22,14 +22,18 @@ function readYaml(filepath) {
 }
 
 class LarkConfig {
-    constructor(configDirPath) {
-        assert('string' === typeof configDirPath, 'Param path should be a string');
-        this.path = misc.path.absolute(configDirPath);
-        const directory = new Directory(configDirPath);
-        this.config = directory.filter(filepath => parsers.has(path.extname(filepath)))
-                               .mapkeys(key => path.basename(key, path.extname(key)))
-                               .map(filepath => parsers.get(path.extname(filepath))(filepath))
-                               .toObject();
+    constructor(config = {}) {
+        if ('string' === typeof config) {
+            const directory = new Directory(config);
+            this.config = directory.filter(filepath => parsers.has(path.extname(filepath)))
+                                   .mapkeys(key => path.basename(key, path.extname(key)))
+                                   .map(filepath => parsers.get(path.extname(filepath))(filepath))
+                                   .toObject();
+        }
+        else {
+            assert(config instanceof Object, 'Config must be an object or a path to a directory');
+            this.config = config;
+        }
     }
     get(name) {
         assert('string' === typeof name, 'Invalid name, should be a string');
