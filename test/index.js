@@ -3,7 +3,8 @@
  **/
 'use strict';
 
-const LarkConfig = require('..');
+const should      = require('should');
+const LarkConfig  = require('..');
 
 const config = require('../example');
 
@@ -26,6 +27,15 @@ describe('config extended returns correctly values', () => {
         econfig.get('d/e/key-e').should.be.exactly('content-e');
         econfig.get('bbb').should.be.exactly('ccc');
         econfig.get('a/key-a').should.be.exactly('aaa');
+        done();
+    });
+});
+
+describe('config reset will clear all config values', () => {
+    it('should clear all values', (done) => {
+        const rconfig = new LarkConfig(config.config);
+        rconfig.reset();
+        Object.keys(rconfig.config).length.should.be.exactly(0);
         done();
     });
 });

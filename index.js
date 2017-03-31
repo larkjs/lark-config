@@ -93,6 +93,10 @@ class LarkConfig {
         this.config = extend(this.config, config, true);
         return this;
     }
+    reset() {
+        this.config = {};
+        return this;
+    }
 }
 
 module.exports = LarkConfig;
