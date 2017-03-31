@@ -19,6 +19,17 @@ describe('config initialized with an object', () => {
     });
 });
 
+describe('config extended returns correctly values', () => {
+    it('should return values in both configs', (done) => {
+        const econfig = new LarkConfig(config.config);
+        econfig.use({ bbb: 'ccc', a : {'key-a' : 'aaa'}});
+        econfig.get('d/e/key-e').should.be.exactly('content-e');
+        econfig.get('bbb').should.be.exactly('ccc');
+        econfig.get('a/key-a').should.be.exactly('aaa');
+        done();
+    });
+});
+
 describe('config loaded from directory', () => {
     it('should be an object with configs', (done) => {
         config.should.be.an.instanceof(LarkConfig);

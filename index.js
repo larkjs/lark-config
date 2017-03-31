@@ -4,6 +4,7 @@
 'use strict';
 
 const assert    = require('assert');
+const extend    = require('extend');
 const fs        = require('fs');
 const misc      = require('vi-misc');
 const path      = require('path');
@@ -32,7 +33,7 @@ class LarkConfig {
         }
         else {
             assert(config instanceof Object, 'Config must be an object or a path to a directory');
-            this.config = config;
+            this.config = extend({}, config, true);
         }
     }
     get(name) {
@@ -84,6 +85,12 @@ class LarkConfig {
         }
         assert(!overwrite || pointer.hasOwnProperty(lastKey), 'Invalid name, no such a config path');
         delete pointer[lastKey];
+        return this;
+    }
+    use(config = {}) {
+        config = new LarkConfig(config);
+        config = extend({}, config.config, true);
+        this.config = extend(this.config, config, true);
         return this;
     }
 }
