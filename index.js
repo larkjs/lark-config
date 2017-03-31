@@ -41,15 +41,17 @@ class LarkConfig {
         }
         return pointer;
     }
-    set(name, value) {
+    set(name, value, overwrite = false) {
         assert('string' === typeof name, 'Invalid name, should be a string');
         const names = misc.path.split(name);
         let pointer = this.config;
         let lastKey = names.pop();
         for (let key of names) {
-            assert(pointer.hasOwnProperty(key), 'Invalid name, no such a config path');
+            assert(!overwrite || pointer.hasOwnProperty(key), 'Invalid name, no such a config path');
+            pointer[key] = pointer[key] || {};
             pointer = pointer[key];
         }
+        assert(!overwrite || pointer.hasOwnProperty(lastKey), 'Invalid name, no such a config path');
         pointer[lastKey] = value;
         return this;
     }
@@ -64,15 +66,19 @@ class LarkConfig {
         }
         return pointer.hasOwnProperty(lastKey);
     }
-    remove(name) {
+    remove(name, overwrite = false) {
         assert('string' === typeof name, 'Invalid name, should be a string');
         const names = misc.path.split(name);
         let pointer = this.config;
         let lastKey = names.pop();
         for (let key of names) {
-            assert(pointer.hasOwnProperty(key), 'Invalid name, no such a config path');
+            if (!pointer.hasOwnProperty(key)) {
+                assert(!overwrite, 'Invalid name, no such a config path');
+                return this;
+            }
             pointer = pointer[key];
         }
+        assert(!overwrite || pointer.hasOwnProperty(lastKey), 'Invalid name, no such a config path');
         delete pointer[lastKey];
         return this;
     }
