@@ -9,13 +9,26 @@ const LarkConfig  = require('..');
 const config = require('../example');
 
 describe('config initialized with an object', () => {
-    it('should be on object with configs', (done) => {
+    it('should return an object with configs', (done) => {
         const oconfig = new LarkConfig(config.config);
         oconfig.get('a').should.have.property('key-a', 'value-a');
         oconfig.get('a/key-a').should.be.exactly('value-a');
         oconfig.get('d').should.have.property('e');
         oconfig.get('d').e.should.have.property('key-e', 'content-e');
         oconfig.get('d/e/key-e').should.be.exactly('content-e');
+        done();
+    });
+});
+
+describe('config initialized with a file', () => {
+    it('should return an object with configs', (done) => {
+        const fconfig = new LarkConfig();
+        fconfig.use();
+        fconfig.use('configs/a.json');
+        fconfig.get('key-a').should.be.exactly('value-a');
+        fconfig.get('key-b').should.be.an.instanceof(Object);
+        fconfig.get('key-b/key-b-1').should.be.exactly('content-b-1');
+        fconfig.get('key-b/key-b-2').should.be.exactly('content-b-2');
         done();
     });
 });
@@ -78,6 +91,7 @@ describe('config loaded from directory', () => {
         config.remove('a/key-a');
         config.get('a').should.not.have.property('key-a');
         config.has('a/key-a').should.not.be.ok;
+        config.has('not/exist').should.not.be.ok;
         done();
     });
     it('should throw error if removing an none-existing key, in overwrite mode', (done) => {

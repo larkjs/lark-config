@@ -25,7 +25,12 @@ function readYaml(filepath) {
 class LarkConfig {
     constructor(config = {}) {
         if ('string' === typeof config) {
-            const directory = new Directory(config);
+            const target = misc.path.absolute(config);
+            if (fs.statSync(target).isFile()) {
+                this.config = parsers.get(path.extname(target))(target);
+                return;
+            }
+            const directory = new Directory(target);
             this.config = directory.filter(filepath => parsers.has(path.extname(filepath)))
                                    .mapkeys(key => path.basename(key, path.extname(key)))
                                    .map(filepath => parsers.get(path.extname(filepath))(filepath))
