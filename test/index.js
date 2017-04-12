@@ -122,3 +122,15 @@ describe('config loaded from directory', () => {
         done();
     });
 });
+
+describe('config loaded from directory again', () => {
+    const config = new LarkConfig('configs');
+    it('should return config value as the original one', (done) => {
+        config.get('a').should.have.property('key-a', 'value-a');
+        config.get('a/key-a').should.be.exactly('value-a');
+        config.get('d').should.have.property('e');
+        config.get('d').e.should.have.property('key-e', 'content-e');
+        config.get('d/e/key-e').should.be.exactly('content-e');
+        done();
+    });
+});

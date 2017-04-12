@@ -11,16 +11,20 @@ const path      = require('path');
 const yaml      = require('js-yaml');
 const Directory = require('directoryfiles');
 
-const parsers = new Map([
-    ['.js',   require],
-    ['.json', require],
-    ['.yaml', readYaml],
-    ['.yml',  readYaml]
-]);
-
 function readYaml(filepath) {
     return yaml.safeLoad(fs.readFileSync(filepath, 'utf8'));
 }
+
+function requireClone(filepath) {
+    return extend(null, require(filepath), true);
+}
+
+const parsers = new Map([
+    ['.js',   requireClone],
+    ['.json', requireClone],
+    ['.yaml', readYaml],
+    ['.yml',  readYaml]
+]);
 
 class LarkConfig {
     constructor(config = {}) {
