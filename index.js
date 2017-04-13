@@ -28,22 +28,8 @@ const parsers = new Map([
 
 class LarkConfig {
     constructor(config = {}) {
-        if ('string' === typeof config) {
-            const target = misc.path.absolute(config);
-            if (fs.statSync(target).isFile()) {
-                this.config = parsers.get(path.extname(target))(target);
-                return;
-            }
-            const directory = new Directory(target);
-            this.config = directory.filter(filepath => parsers.has(path.extname(filepath)))
-                                   .mapkeys(key => path.basename(key, path.extname(key)))
-                                   .map(filepath => parsers.get(path.extname(filepath))(filepath))
-                                   .toObject();
-        }
-        else {
-            assert(config instanceof Object, 'Config must be an object or a path to a directory');
-            this.config = extend({}, config, true);
-        }
+        this.config = {};
+        this.use(config);
     }
     get(name) {
         assert('string' === typeof name, 'Invalid name, should be a string');
@@ -97,8 +83,20 @@ class LarkConfig {
         return this;
     }
     use(config = {}) {
-        config = new LarkConfig(config);
-        config = extend({}, config.config, true);
+        if ('string' === typeof config) {
+            const target = misc.path.absolute(config);
+            if (fs.statSync(target).isFile()) {
+                config = parsers.get(path.extname(target))(target);
+            }
+            else {
+                const directory = new Directory(target);
+                config = directory.filter(filepath => parsers.has(path.extname(filepath)))
+                    .mapkeys(key => path.basename(key, path.extname(key)))
+                    .map((filepath) => parsers.get(path.extname(filepath))(filepath))
+                    .toObject();
+            }
+        }
+        assert(config instanceof Object, 'Config must be an object or a path to a directory');
         this.config = extend(this.config, config, true);
         return this;
     }
