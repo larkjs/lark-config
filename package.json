@@ -1,6 +1,6 @@
 {
   "name": "lark-config",
-  "version": "2.5.1",
+  "version": "2.5.2",
   "description": "lark config module",
   "engines": {
     "node": ">=7.6"
@@ -10,7 +10,7 @@
     "debug": "node --inspect-brk=9229 example/index.js"
   },
   "dependencies": {
-    "directoryfiles": "^1.0.0",
+    "directoryfiles": "^1.1.0",
     "extend": "^3.0.0",
     "js-yaml": "^3.8.2",
     "vi-misc": "^1.1.0"
