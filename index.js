@@ -16,7 +16,11 @@ function readYaml(filepath) {
 }
 
 function requireClone(filepath) {
-    return extend(null, require(filepath), true);
+    let module = require(filepath);
+    if ('object' === typeof module) {
+        module = extend({}, module, true);
+    }
+    return module;
 }
 
 const parsers = new Map([

@@ -67,6 +67,8 @@ describe('config loaded from directory', () => {
         config.get('d').should.have.property('e');
         config.get('d').e.should.have.property('key-e', 'content-e');
         config.get('d/e/key-e').should.be.exactly('content-e');
+        config.get('g').should.be.an.instanceof(Function);
+        config.get('g')().should.be.exactly('How are you');
         done();
     });
     it('should return modified config after been set', (done) => {

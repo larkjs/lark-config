@@ -1,6 +1,6 @@
 {
   "name": "lark-config",
-  "version": "2.5.2",
+  "version": "2.5.3",
   "description": "lark config module",
   "engines": {
     "node": ">=7.6"
