@@ -104,6 +104,28 @@ class LarkConfig {
         this.config = extend(this.config, config, true);
         return this;
     }
+    async useAsync(config = {}) {
+        if ('string' === typeof config) {
+            const target = misc.path.absolute(config);
+            let stats = await new Promise((resolve, reject) => {
+                fs.stat(target, (error, stats) => error ? reject(error) : resolve(stats));
+            });
+            if (stats.isFile()) {
+                config = parsers.get(path.extname(target))(target);
+            }
+            else {
+                const directory = new Directory(target, true);
+                await directory.load();
+                config = directory.filter(filepath => parsers.has(path.extname(filepath)))
+                    .mapkeys(key => path.basename(key, path.extname(key)))
+                    .map((filepath) => parsers.get(path.extname(filepath))(filepath))
+                    .toObject();
+            }
+        }
+        assert(config instanceof Object, 'Config must be an object or a path to a directory');
+        this.config = extend(this.config, config, true);
+        return this;
+    }
     reset() {
         this.config = {};
         return this;
