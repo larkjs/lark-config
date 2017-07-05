@@ -16,7 +16,8 @@ $ npm install --save lark-config
 ## How to use
 
 ```
-const config = new Config('configs');
+const config = new Config();
+await config.use('configs');
 ```
 
 This will load all files (.js, .json, .yaml, .yml) in directory 'configs'.
