@@ -4,6 +4,7 @@
 'use strict';
 
 const assert    = require('assert');
+const bluebird  = require('bluebird');
 const extend    = require('extend');
 const fs        = require('fs');
 const misc      = require('vi-misc');
@@ -11,19 +12,21 @@ const path      = require('path');
 const yaml      = require('js-yaml');
 const Directory = require('directoryfiles');
 
-function readYaml(filepath) {
-    return yaml.safeLoad(fs.readFileSync(filepath, 'utf8'));
+bluebird.promisifyAll(fs);
+
+function readYaml(filePath) {
+    return yaml.safeLoad(fs.readFileSync(filePath, 'utf8'));
 }
 
-function requireClone(filepath) {
-    let module = require(filepath);
+function requireClone(filePath) {
+    let module = require(filePath);
     if ('object' === typeof module) {
-        module = extend({}, module, true);
+        module = extend(true, {}, module);
     }
     return module;
 }
 
-const parsers = new Map([
+const parserMap = new Map([
     ['.js',   requireClone],
     ['.json', requireClone],
     ['.yaml', readYaml],
@@ -31,9 +34,8 @@ const parsers = new Map([
 ]);
 
 class LarkConfig {
-    constructor(config = {}) {
+    constructor() {
         this.config = {};
-        this.use(config);
     }
     get(name) {
         assert('string' === typeof name, 'Invalid name, should be a string');
@@ -86,44 +88,24 @@ class LarkConfig {
         delete pointer[lastKey];
         return this;
     }
-    use(config = {}) {
+    async use(config = {}) {
         if ('string' === typeof config) {
             const target = misc.path.absolute(config);
-            if (fs.statSync(target).isFile()) {
-                config = parsers.get(path.extname(target))(target);
-            }
-            else {
-                const directory = new Directory(target);
-                config = directory.filter(filepath => parsers.has(path.extname(filepath)))
-                    .mapkeys(key => path.basename(key, path.extname(key)))
-                    .map((filepath) => parsers.get(path.extname(filepath))(filepath))
-                    .toObject();
-            }
-        }
-        assert(config instanceof Object, 'Config must be an object or a path to a directory');
-        this.config = extend(this.config, config, true);
-        return this;
-    }
-    async useAsync(config = {}) {
-        if ('string' === typeof config) {
-            const target = misc.path.absolute(config);
-            let stats = await new Promise((resolve, reject) => {
-                fs.stat(target, (error, stats) => error ? reject(error) : resolve(stats));
-            });
+            const stats = await fs.statAsync(target);
             if (stats.isFile()) {
-                config = parsers.get(path.extname(target))(target);
+                config = parserMap.get(path.extname(target))(target);
             }
             else {
-                const directory = new Directory(target, true);
-                await directory.load();
-                config = directory.filter(filepath => parsers.has(path.extname(filepath)))
-                    .mapkeys(key => path.basename(key, path.extname(key)))
-                    .map((filepath) => parsers.get(path.extname(filepath))(filepath))
+                const directory = new Directory();
+                await directory.load(target);
+                config = directory.filter(filePath => parserMap.has(path.extname(filePath)))
+                    .mapKeys(key => path.basename(key, path.extname(key)))
+                    .map((filePath) => parserMap.get(path.extname(filePath))(filePath))
                     .toObject();
             }
         }
         assert(config instanceof Object, 'Config must be an object or a path to a directory');
-        this.config = extend(this.config, config, true);
+        this.config = extend(true, this.config, config);
         return this;
     }
     reset() {

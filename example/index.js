@@ -3,8 +3,12 @@
  **/
 process.mainModule = module;
 
-const Config  = require('..');
+const Config  = require('lark-config');
 
-const config = new Config('configs');
+async function main() {
+    const config = new Config();
+    await config.use('configs');
+    return config;
+}
 
-module.exports = config;
+module.exports = main;
