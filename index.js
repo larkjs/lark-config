@@ -4,7 +4,6 @@
 'use strict';
 
 const assert    = require('assert');
-const bluebird  = require('bluebird');
 const extend    = require('extend');
 const fs        = require('fs');
 const misc      = require('vi-misc');
@@ -12,8 +11,12 @@ const path      = require('path');
 const yaml      = require('js-yaml');
 const Directory = require('directoryfiles');
 
-bluebird.promisifyAll(fs);
+misc.promisify.all(fs);
 
+/**
+ * Lark Config supports loading and parse yaml, json, js and node files
+ * Here are the loader functions and their map relations
+ **/
 function readYaml(filePath) {
     return yaml.safeLoad(fs.readFileSync(filePath, 'utf8'));
 }
@@ -29,14 +32,39 @@ function requireClone(filePath) {
 const parserMap = new Map([
     ['.js',   requireClone],
     ['.json', requireClone],
+    ['.node', requireClone],
     ['.yaml', readYaml],
     ['.yml',  readYaml]
 ]);
 
+/**
+ * Lark Config is a class and provides methods to load, set and get configs.
+ * Typically I suppose you use `await config.use(directoryPath)` to load all configs from a certain
+ * directory. Lark Config will load all files[1] under that directory and transform the
+ * into a tree[2] stored in `this.config`.
+ * Then when you use this.get('key-a/key-b/key-c') to access a value of a config, it's equivalent to
+ * access the value of `this.config['key-a']['key-b']['key-c'], which is also equivalent to access the
+ * value of one of the following:
+ *    `require('{appRoot}/{directoryPath}/key-a')['key-b']['key-c']` or
+ *    `require('{appRoot}/{directoryPath}/key-a/key-b')['key-c']` or
+ *    `require('{appRoot}/{directoryPath}/key-a/key-b/key-c')`
+ * What if more than one above occurs? It should throw an error like 'Duplicated Key ...', by the depend
+ * module `directoryfiles`, by calling `directory.mapKeys`[3].
+ *
+ * [1] Files with extend name in the parser map. Or the file will be ignored.
+ * [2] Actually it is an pure JS Object.
+ * [3] Map keys will change the keys into new ones. But new key should not overwrite existing keys, otherwise
+ *     we don't know which should be kept and which should be discard.
+ **/
 class LarkConfig {
     constructor() {
         this.config = {};
     }
+    /**
+     * Get a config in a none-existing name causes an error.
+     * Any return value may be legal for a config, so I can not use return value to tell errors.
+     * Use this.has to check before calling this.get.
+     **/
     get(name) {
         assert('string' === typeof name, 'Invalid name, should be a string');
         const names = misc.path.split(name);
@@ -47,6 +75,12 @@ class LarkConfig {
         }
         return pointer;
     }
+    /**
+     * The param overwrite:
+     *     If true, Lark Config suppose you are going to change a config, and assert
+     *     the config should exist with that name.
+     *     If false, Lark Config will create a new one if config not exist.
+     **/
     set(name, value, overwrite = false) {
         assert('string' === typeof name, 'Invalid name, should be a string');
         const names = misc.path.split(name);
