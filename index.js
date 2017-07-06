@@ -48,8 +48,9 @@ const parserMap = new Map([
  *    `require('{appRoot}/{directoryPath}/key-a')['key-b']['key-c']` or
  *    `require('{appRoot}/{directoryPath}/key-a/key-b')['key-c']` or
  *    `require('{appRoot}/{directoryPath}/key-a/key-b/key-c')`
- * What if more than one above occurs? It should throw an error like 'Duplicated Key ...', by the depend
- * module `directoryfiles`, by calling `directory.mapKeys`[3].
+ * What if both `{appRoot}/{directoryPath}/key-a` and `{appRoot}/{directoryPath}/key-a/key-b` are existing files?
+ * It should throw an error like 'Duplicated Key ...', by the depend module `directoryfiles`,
+ * by calling `directory.mapKeys`[3].
  *
  * [1] Files with extend name in the parser map. Or the file will be ignored.
  * [2] Actually it is an pure JS Object.
