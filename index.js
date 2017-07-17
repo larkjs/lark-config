@@ -39,23 +39,24 @@ const parserMap = new Map([
 
 /**
  * Lark Config is a class and provides methods to load, set and get configs.
- * Typically I suppose you use `await config.use(directoryPath)` to load all configs from a certain
+ * Typically you are supposed to use `await config.use(directoryPath)` to load all configs from a certain
  * directory. Lark Config will load all files[1] under that directory and transform the
  * into a tree[2] stored in `this.config`.
  * Then when you use this.get('key-a/key-b/key-c') to access a value of a config, it's equivalent to
  * access the value of `this.config['key-a']['key-b']['key-c'], which is also equivalent to access the
- * value of one of the following:
+ * value of one of the following ways:
  *    `require('{appRoot}/{directoryPath}/key-a')['key-b']['key-c']` or
  *    `require('{appRoot}/{directoryPath}/key-a/key-b')['key-c']` or
  *    `require('{appRoot}/{directoryPath}/key-a/key-b/key-c')`
- * What if both `{appRoot}/{directoryPath}/key-a` and `{appRoot}/{directoryPath}/key-a/key-b` are existing files?
+ * What if there are more than one case on above occurs, such as the case
+ * both `{appRoot}/{directoryPath}/key-a` and `{appRoot}/{directoryPath}/key-a/key-b` exists ?
  * It should throw an error like 'Duplicated Key ...', by the depend module `directoryfiles`,
- * by calling `directory.mapKeys`[3].
+ * by calling `directory.mapKeys`[3]. So make sure there's no duplicated cases.
  *
  * [1] Files with extend name in the parser map. Or the file will be ignored.
  * [2] Actually it is an pure JS Object.
  * [3] Map keys will change the keys into new ones. But new key should not overwrite existing keys, otherwise
- *     we don't know which should be kept and which should be discard.
+ *     I don't know which should be kept and which should be discard.
  **/
 class LarkConfig {
     constructor() {
