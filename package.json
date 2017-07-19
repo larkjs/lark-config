@@ -13,6 +13,7 @@
     "debug": "node --inspect-brk=9229 example/index.js"
   },
   "dependencies": {
+    "debug": "^2.6.8",
     "directoryfiles": "^2.0.1",
     "extend": "^3.0.0",
     "js-yaml": "^3.8.2",

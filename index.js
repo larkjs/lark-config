@@ -4,6 +4,7 @@
 'use strict';
 
 const assert    = require('assert');
+const debug     = require('debug')('lark-config.index');
 const extend    = require('extend');
 const fs        = require('fs');
 const misc      = require('vi-misc');
@@ -18,10 +19,12 @@ misc.promisify.all(fs);
  * Here are the loader functions and their map relations
  **/
 function readYaml(filePath) {
+    debug(`read yaml ${filePath}`);
     return yaml.safeLoad(fs.readFileSync(filePath, 'utf8'));
 }
 
 function requireClone(filePath) {
+    debug(`require ${filePath}`);
     let module = require(filePath);
     if ('object' === typeof module) {
         module = extend(true, {}, module);
@@ -60,6 +63,7 @@ const parserMap = new Map([
  **/
 class LarkConfig {
     constructor() {
+        debug('construct');
         this.config = {};
     }
     /**
@@ -68,6 +72,7 @@ class LarkConfig {
      * Use this.has to check before calling this.get.
      **/
     get(name) {
+        debug(`get ${name}`);
         assert('string' === typeof name, 'Invalid name, should be a string');
         const names = misc.path.split(name);
         let pointer = this.config;
@@ -84,6 +89,7 @@ class LarkConfig {
      *     If false, Lark Config will create a new one if config not exist.
      **/
     set(name, value, overwrite = false) {
+        debug(`set ${name} in ${overwrite ? 'overwrite' : 'loose'} mode`);
         assert('string' === typeof name, 'Invalid name, should be a string');
         const names = misc.path.split(name);
         let pointer = this.config;
@@ -98,6 +104,7 @@ class LarkConfig {
         return this;
     }
     has(name) {
+        debug(`check has ${name}`);
         assert('string' === typeof name, 'Invalid name, should be a string');
         const names = misc.path.split(name);
         let pointer = this.config;
@@ -109,6 +116,7 @@ class LarkConfig {
         return pointer.hasOwnProperty(lastKey);
     }
     remove(name, overwrite = false) {
+        debug(`remove ${name} in ${overwrite ? 'overwrite' : 'loose'} mode`);
         assert('string' === typeof name, 'Invalid name, should be a string');
         const names = misc.path.split(name);
         let pointer = this.config;
@@ -126,6 +134,7 @@ class LarkConfig {
     }
     async use(config = {}) {
         if ('string' === typeof config) {
+            debug(`using config in "${config}"`);
             const target = misc.path.absolute(config);
             const stats = await fs.statAsync(target);
             if (stats.isFile()) {
@@ -140,11 +149,13 @@ class LarkConfig {
                     .toObject();
             }
         }
+        debug('use config with object');
         assert(config instanceof Object, 'Config must be an object or a path to a directory');
         this.config = extend(true, this.config, config);
         return this;
     }
     reset() {
+        debug('reset');
         this.config = {};
         return this;
     }
