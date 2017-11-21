@@ -17,17 +17,18 @@ $ npm install --save lark-config
 
 ```
 const config = new Config();
-await config.use('configs');
+await config.load('configs');
 ```
 
-This will load all files (.js, .json, .yaml, .yml) in directory 'configs'.
+This will load all files (.js, .json, .yaml, .yml, .node) in directory 'configs'.
 
 Then you can easily get/check/remove a config by path:
 
 ```
-config.get("path/to/file/foo/bar");       // nearly same as require('path/to/file').foo.bar
-config.has("path/to/file/foo/bar");
-config.remove("path/to/file/foo/bar");
+config.get("path.to.file.foo.bar");       // nearly same as require('path/to/file').foo.bar
+config.has("path.to.file.foo.bar");
+config.delete("path.to.file.foo.bar");
+config.set("path.to.file.foo.bar", "new-value");
 ```
 
 

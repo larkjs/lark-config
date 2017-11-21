@@ -35,6 +35,7 @@ rules:
         - js
         - param
         - promisify
+        - sep
         - utf8
         - yaml
         - yml

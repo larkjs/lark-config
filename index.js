@@ -1,164 +1,185 @@
 /**
- * Load configs from directories
+ * Lark Config, a config loader and parser
  **/
 'use strict';
 
-const assert    = require('assert');
-const debug     = require('debug')('lark-config.index');
-const extend    = require('extend');
-const fs        = require('fs');
-const misc      = require('vi-misc');
-const path      = require('path');
-const yaml      = require('js-yaml');
-const Directory = require('directoryfiles');
+const assert      = require('assert');
+const debug       = require('debug')('lark-config');
+const fs          = require('fs');
+const misc        = require('vi-misc');
+const path        = require('path');
+const parse_json  = require('parse-json');
+const yaml        = require('js-yaml');
+const Descriptor  = require('directoryfiles');
+misc.async.all(fs);
 
-misc.promisify.all(fs);
 
-/**
- * Lark Config supports loading and parse yaml, json, js and node files
- * Here are the loader functions and their map relations
- **/
-function readYaml(filePath) {
-    debug(`read yaml ${filePath}`);
-    return yaml.safeLoad(fs.readFileSync(filePath, 'utf8'));
-}
-
-function requireClone(filePath) {
-    debug(`require ${filePath}`);
-    let module = require(filePath);
-    if ('object' === typeof module) {
-        module = extend(true, {}, module);
-    }
-    return module;
-}
-
-const parserMap = new Map([
-    ['.js',   requireClone],
-    ['.json', requireClone],
-    ['.node', requireClone],
-    ['.yaml', readYaml],
-    ['.yml',  readYaml]
-]);
-
-/**
- * Lark Config is a class and provides methods to load, set and get configs.
- * Typically you are supposed to use `await config.use(directoryPath)` to load all configs from a certain
- * directory. Lark Config will load all files[1] under that directory and transform the
- * into a tree[2] stored in `this.config`.
- * Then when you use this.get('key-a/key-b/key-c') to access a value of a config, it's equivalent to
- * access the value of `this.config['key-a']['key-b']['key-c'], which is also equivalent to access the
- * value of one of the following ways:
- *    `require('{appRoot}/{directoryPath}/key-a')['key-b']['key-c']` or
- *    `require('{appRoot}/{directoryPath}/key-a/key-b')['key-c']` or
- *    `require('{appRoot}/{directoryPath}/key-a/key-b/key-c')`
- * What if there are more than one case on above occurs, such as the case
- * both `{appRoot}/{directoryPath}/key-a` and `{appRoot}/{directoryPath}/key-a/key-b` exists ?
- * It should throw an error like 'Duplicated Key ...', by the depend module `directoryfiles`,
- * by calling `directory.mapKeys`[3]. So make sure there's no duplicated cases.
- *
- * [1] Files with extend name in the parser map. Or the file will be ignored.
- * [2] Actually it is an pure JS Object.
- * [3] Map keys will change the keys into new ones. But new key should not overwrite existing keys, otherwise
- *     I don't know which should be kept and which should be discard.
- **/
 class LarkConfig {
-    constructor() {
+
+    static get LOAD_MODULE() { return load_module; }
+    static get LOAD_JSON() { return load_json; }
+    static get LOAD_YAML() { return load_yaml; }
+
+    constructor(options = {}) {
         debug('construct');
+        assert(options instanceof Object, 'Options must be an object');
         this.config = {};
+        this.options = misc.object.clone(options);
+        this.options.sep = this.options.sep || '.';
+        this.fileLoaders = {
+            node: LarkConfig.LOAD_MODULE,
+            js: LarkConfig.LOAD_MODULE,
+            json: LarkConfig.LOAD_JSON,
+            yaml: LarkConfig.LOAD_YAML,
+            yml: LarkConfig.LOAD_YAML,
+        };
     }
+
     /**
-     * Get a config in a none-existing name causes an error.
-     * Any return value may be legal for a config, so I can not use return value to tell errors.
-     * Use this.has to check before calling this.get.
+     * Use object configs
      **/
-    get(name) {
-        debug(`get ${name}`);
-        assert('string' === typeof name, 'Invalid name, should be a string');
-        const names = misc.path.split(name);
-        let pointer = this.config;
-        for (let key of names) {
-            assert(pointer.hasOwnProperty(key), 'Invalid name, no such a config path');
-            pointer = pointer[key];
+    use(object) {
+        debug('use object');
+        assert(object instanceof Object, 'Using an invalid config');
+        if (object instanceof LarkConfig) {
+            object = object.config;
         }
-        return pointer;
+        object = reorganize(object, this.options.sep);
+        this.config = misc.object.merge(this.config, object);
+        return this;
     }
+
     /**
-     * The param overwrite:
-     *     If true, Lark Config suppose you are going to change a config, and assert
-     *     the config should exist with that name.
-     *     If false, Lark Config will create a new one if config not exist.
+     * Load configs from a directory or a file
      **/
-    set(name, value, overwrite = false) {
-        debug(`set ${name} in ${overwrite ? 'overwrite' : 'loose'} mode`);
-        assert('string' === typeof name, 'Invalid name, should be a string');
-        const names = misc.path.split(name);
-        let pointer = this.config;
-        let lastKey = names.pop();
-        for (let key of names) {
-            assert(!overwrite || pointer.hasOwnProperty(key), 'Invalid name, no such a config path');
-            pointer[key] = pointer[key] || {};
-            pointer = pointer[key];
-        }
-        assert(!overwrite || pointer.hasOwnProperty(lastKey), 'Invalid name, no such a config path');
-        pointer[lastKey] = value;
+    async load(descriptor_path) {
+        assert('string' === typeof descriptor_path, 'Descriptor path must be a string');
+        debug(`loading [${descriptor_path}]`);
+        const descriptor = new Descriptor(descriptor_path);
+        await descriptor.ready();
+        const object = await this._parse(descriptor.tree);
+        return this.use(object);
+    }
+
+    /**
+     * Get the config value by key_chain
+     **/
+    get(key_chain) {
+        const sep = this.options.sep;
+        return misc.object.getByKeys(this.config, ...(misc.path.split(key_chain, sep)));
+    }
+
+    /**
+     * Get the config by key_chain
+     **/
+    getConfig(key_chain) {
+        const value = this.get(key_chain);
+        return value instanceof Object ? new LarkConfig().use(value) : value;
+    }
+
+    /**
+     * Set the config value by key_chain
+     **/
+    set(key_chain, value) {
+        const sep = this.options.sep;
+        value = value instanceof LarkConfig ? value.config : value;
+        misc.object.setByKeys(this.config, value, ...(misc.path.split(key_chain, sep)));
         return this;
     }
-    has(name) {
-        debug(`check has ${name}`);
-        assert('string' === typeof name, 'Invalid name, should be a string');
-        const names = misc.path.split(name);
-        let pointer = this.config;
-        let lastKey = names.pop();
-        for (let key of names) {
-            if (!pointer.hasOwnProperty(key)) return false;
-            pointer = pointer[key];
-        }
-        return pointer.hasOwnProperty(lastKey);
+
+    /**
+     * Check if a config is set
+     **/
+    has(key_chain) {
+        const sep = this.options.sep;
+        return misc.object.hasByKeys(this.config, ...(misc.path.split(key_chain, sep)));
     }
-    remove(name, overwrite = false) {
-        debug(`remove ${name} in ${overwrite ? 'overwrite' : 'loose'} mode`);
-        assert('string' === typeof name, 'Invalid name, should be a string');
-        const names = misc.path.split(name);
-        let pointer = this.config;
-        let lastKey = names.pop();
-        for (let key of names) {
-            if (!pointer.hasOwnProperty(key)) {
-                assert(!overwrite, 'Invalid name, no such a config path');
-                return this;
-            }
-            pointer = pointer[key];
-        }
-        assert(!overwrite || pointer.hasOwnProperty(lastKey), 'Invalid name, no such a config path');
-        delete pointer[lastKey];
+
+    /**
+     * Delete a config by key_chain
+     **/
+    delete(key_chain) {
+        const sep = this.options.sep;
+        misc.object.removeByKeys(this.config, ...(misc.path.split(key_chain, sep)));
         return this;
     }
-    async use(config = {}) {
-        if ('string' === typeof config) {
-            debug(`using config in "${config}"`);
-            const target = misc.path.absolute(config);
-            const stats = await fs.statAsync(target);
-            if (stats.isFile()) {
-                config = parserMap.get(path.extname(target))(target);
-            }
-            else {
-                const directory = new Directory();
-                await directory.load(target);
-                config = directory.filter(filePath => parserMap.has(path.extname(filePath)))
-                    .mapKeys(key => path.basename(key, path.extname(key)))
-                    .map((filePath) => parserMap.get(path.extname(filePath))(filePath))
-                    .toObject();
-            }
+
+    /**
+     * Set the file loader
+     **/
+    setFileLoader(extname, loader) {
+        assert('string' === typeof extname, 'Extname must be a string');
+        assert(loader instanceof Function, 'Parser must be a function');
+        debug(`set file loader for ${extname}`);
+        this.fileLoaders[extname] = loader;
+        return this;
+    }
+
+    /**
+     * Parse the file
+     **/
+    async _parse(target) {
+        if ('string' === typeof target) {
+            return await this._loadFile(target);
         }
-        debug('use config with object');
-        assert(config instanceof Object, 'Config must be an object or a path to a directory');
-        this.config = extend(true, this.config, config);
-        return this;
+        assert(target instanceof Object, 'Invalid type of target');
+        const result = {};
+        for (let name in target) {
+            const key = path.basename(name, path.extname(name));
+            result[key] = await this._parse(target[name]);
+        }
+        return result;
     }
-    reset() {
-        debug('reset');
-        this.config = {};
-        return this;
+
+    /**
+     * Load file
+     **/
+    async _loadFile(file_path) {
+        const extname = path.extname(file_path).slice(1).toLowerCase();
+        if (!(this.fileLoaders[extname] instanceof Function)) {
+            return null;
+        }
+        return await this.fileLoaders[extname](file_path);
     }
+
+}
+
+
+function reorganize(object, sep = '.') {
+    if (!(object instanceof Object) || object instanceof Function) {
+        return object;
+    }
+    const result = Array.isArray(object) ? [] : {};
+    for (const name in object) {
+        const value = reorganize(object[name]);
+        misc.object.setByKeys(result, value, ...(misc.path.split(name, sep)));
+    }
+    return result;
+}
+
+
+async function load_yaml(file_path) {
+    const rel_path = path.relative(misc.path.root, file_path);
+    debug(`load yaml [${rel_path}]`);
+    const content = await fs.readFileAsync(file_path);
+    const object = yaml.safeLoad(content);
+    return object;
+}
+
+
+async function load_module(file_path) {
+    const rel_path = path.relative(misc.path.root, file_path);
+    debug(`load module [${rel_path}]`);
+    return require(file_path);
+}
+
+
+async function load_json(file_path) {
+    const rel_path = path.relative(misc.path.root, file_path);
+    debug(`load json [${rel_path}]`);
+    const content = await fs.readFileAsync(file_path);
+    const object = parse_json(content);
+    return object;
 }
 
 module.exports = LarkConfig;

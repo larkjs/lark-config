@@ -1,152 +1,130 @@
 /**
- * Test of lark config
+ * Test for lark-config
  **/
 'use strict';
+process.mainModule = module;
 
-const should      = require('should');
-const LarkConfig  = require('lark-config');
+const assert  = require('assert');
+const should  = require('should');
+const Config  = require('lark-config');
 
-const example = require('../example');
 
-describe('config initialized with an object', () => {
-    it('should return an object with configs', async () => {
-        const config = await example();
-        const oconfig = new LarkConfig();
-        await oconfig.use(config.config);
-        oconfig.get('a').should.have.property('key-a', 'value-a');
-        oconfig.get('a/key-a').should.be.exactly('value-a');
-        oconfig.get('d').should.have.property('e');
-        oconfig.get('d').e.should.have.property('key-e', 'content-e');
-        oconfig.get('d/e/key-e').should.be.exactly('content-e');
+describe('common use', () => {
+    let config = null;
+
+    it('should be ok intializing a config with a directory', async () => {
+        config = new Config();
+        await config.load('configs');
+        config.config.should.be.an.instanceOf(Object);
+        config.config.should.containDeep({
+            'a': {
+                'key-a': 'value-a',
+                'key-b': {
+                    'key-b-1': 'content-b-1',
+                    'key-b-2': 'content-b-2',
+                },
+                'key-c': {
+                    'key-d': 'value-d',
+                },
+            },
+            'b': {
+                'key-b': 'content-b',
+                'key-c': {
+                    'key-c-1': 'content-c-1',
+                    'key-c-2': 'content-c-2',
+                },
+            },
+            'c': {
+                'key-c': 'content-c',
+                'key-d': {
+                    'key-d-1': ['content-d-1.0', 'content-d-1.1'],
+                    'key-d-2': { 'content-d-2': null },
+                },
+            },
+            'd': {
+                'e': {
+                    'key-e': 'content-e',
+                }
+            },
+            'f': {
+                'f': 'value-f',
+            },
+        });
+        config.config.g.should.be.an.instanceOf(Function);
+        config.config.g().should.be.exactly('How are you');
     });
+
+    it('should return the right value using get()', async () => {
+        config.get('a').should.containDeep({
+            'key-a': 'value-a',
+            'key-b': {
+                'key-b-1': 'content-b-1',
+                'key-b-2': 'content-b-2',
+            },
+            'key-c': {
+                'key-d': 'value-d',
+            },
+        });
+        config.get('b.key-b').should.be.exactly('content-b');
+    });
+
+    it('should return a config with getConfig()', async () => {
+        const b_config = config.getConfig('b');
+        b_config.should.be.an.instanceOf(Config);
+        b_config.get('key-c.key-c-2').should.be.exactly('content-c-2');
+        const c_config = config.getConfig('b.key-c.key-c-2');
+        c_config.should.be.exactly('content-c-2');
+    });
+
+    it('should return undefined if getting an none-existing value', async () => {
+        should(config.get('a.no-exists.no-exists')).be.exactly(undefined);
+    });
+
+    it('should return true if getting an existing value', async () => {
+        should(config.has('a')).be.ok;
+    });
+
+    it('should return false if getting an none-existing value', async () => {
+        should(config.has('no-exist')).be.not.ok;
+    });
+
+    it('should set the right value', async () => {
+        config.set('a.b', 'a-b');
+        config.config.a.b.should.be.exactly('a-b');
+    });
+
+    it('should set the right value with another config', async () => {
+        const another = new Config().use({ a: { c: 'CC' }});
+        config.set('aa', another);
+        config.config.aa.should.containDeep({ a: { c: 'CC' }});
+    });
+
+    it('should merge by using another config', async () => {
+        const another = new Config().use({ a: { c: 'CC' }});
+        config.use(another);
+        config.config.should.containDeep({ a: { c: 'CC' }});
+    });
+
+    it('should delete the config by calling delete', async () => {
+        config.delete('a.b');
+        config.config.a.should.not.have.ownProperty('b');
+    });
+
 });
 
-describe('config initialized with a file', () => {
-    it('should return an object with configs', async () => {
-        const fconfig = new LarkConfig();
-        await fconfig.use();
-        await fconfig.use('configs/a.json');
-        fconfig.get('key-a').should.be.exactly('value-a');
-        fconfig.get('key-b').should.be.an.instanceof(Object);
-        fconfig.get('key-b/key-b-1').should.be.exactly('content-b-1');
-        fconfig.get('key-b/key-b-2').should.be.exactly('content-b-2');
-    });
-});
 
-describe('config extended returns correctly values', () => {
-    it('should return values in both configs', async () => {
-        const config = await example();
-        const econfig = new LarkConfig();
-        await econfig.use(config.config);
-        await econfig.use({ bbb: 'ccc', a : {'key-a' : 'aaa'}});
-        econfig.get('d/e/key-e').should.be.exactly('content-e');
-        econfig.get('bbb').should.be.exactly('ccc');
-        econfig.get('a/key-a').should.be.exactly('aaa');
-    });
-});
+describe('loading config with customized parser', () => {
 
-describe('config reset will clear all config values', () => {
-    it('should clear all values', async () => {
-        const config = await example();
-        const rconfig = new LarkConfig();
-        await rconfig.use(config.config);
-        rconfig.reset();
-        Object.keys(rconfig.config).length.should.be.exactly(0);
+    it('should be ok for ".conf" with yaml parser', async () => {
+        const config = new Config();
+        config.setFileLoader('conf', Config.LOAD_YAML);
+        await config.load('conf/c.conf');
+        config.config.should.containDeep({
+            name: {
+                field1: 'value1',
+                field2: ['value2', 'value3'],
+            }
+        });
     });
-});
 
-describe('config loaded from directory', () => {
-    let config;
-    before(async () => {
-        config = await example();
-    });
-    it('should be an object with configs', async () => {
-        config.should.be.an.instanceof(LarkConfig);
-        config.should.have.property('config');
-        config.should.have.property('get');
-        config.get.should.be.an.instanceof(Function);
-    });
-    it('should return config value as expected', async () => {
-        config.get('a').should.have.property('key-a', 'value-a');
-        config.get('a/key-a').should.be.exactly('value-a');
-        config.get('d').should.have.property('e');
-        config.get('d').e.should.have.property('key-e', 'content-e');
-        config.get('d/e/key-e').should.be.exactly('content-e');
-        config.get('g').should.be.an.instanceof(Function);
-        config.get('g')().should.be.exactly('How are you');
-    });
-    it('should return modified config after been set', async () => {
-        config.set('a/key-a', 'value-a-modified');
-        config.get('a').should.have.property('key-a', 'value-a-modified');
-        config.set('a/key/not-exist', 'value-a-new');
-        config.get('a/key').should.have.property('not-exist', 'value-a-new');
-    });
-    it('should throw error if set an none-existing key, in overwrite mode', async () => {
-        let error = {};
-        try {
-            config.set('a/key/not-exist-2', 'value', true);
-        }
-        catch (e) {
-            error = e;
-        }
-        error.should.be.an.instanceof(Error);
-    });
-    it('should return modified config after been set', async () => {
-        config.remove('a/key-a');
-        config.get('a').should.not.have.property('key-a');
-        config.has('a/key-a').should.not.be.ok;
-        config.has('not/exist').should.not.be.ok;
-    });
-    it('should throw error if removing an none-existing key, in overwrite mode', async () => {
-        let error = {};
-        try {
-            config.remove('a/key/not-exist-2', true);
-        }
-        catch (e) {
-            error = e;
-        }
-        error.should.be.an.instanceof(Error);
-        error = {};
-        try {
-            config.remove('a/key/not/exist/2', true);
-        }
-        catch (e) {
-            error = e;
-        }
-        error.should.be.an.instanceof(Error);
-        error = {};
-        try {
-            config.remove('a/key/not/exist/2');
-        }
-        catch (e) {
-            error = e;
-        }
-        error.should.not.be.an.instanceof(Error);
-    });
-});
-
-describe('config loaded from directory again', () => {
-    const config = new LarkConfig();
-    it('should return config value as the original one', async () => {
-        await config.use('configs');
-        config.get('a').should.have.property('key-a', 'value-a');
-        config.get('a/key-a').should.be.exactly('value-a');
-        config.get('d').should.have.property('e');
-        config.get('d').e.should.have.property('key-e', 'content-e');
-        config.get('d/e/key-e').should.be.exactly('content-e');
-    });
-});
-
-describe('config loaded from directory again in async mode', () => {
-    const config = new LarkConfig();
-    it('should return config value as the original one', async () => {
-        await config.use('configs');
-        await config.use({ zzz: 'zzz' });
-        await config.use();
-        config.get('a').should.have.property('key-a', 'value-a');
-        config.get('a/key-a').should.be.exactly('value-a');
-        config.get('d').should.have.property('e');
-        config.get('d').e.should.have.property('key-e', 'content-e');
-        config.get('d/e/key-e').should.be.exactly('content-e');
-    });
 });
