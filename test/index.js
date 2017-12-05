@@ -127,4 +127,42 @@ describe('loading config with customized parser', () => {
         });
     });
 
+    describe('should be ok for ".local" as local config', () => {
+        let config = null;
+        before(() => {
+            config = new Config();
+        });
+
+        it('should be ok without tags', async () => {
+            await config.load('conf/l.json');
+            config.config.should.containDeep({
+                "server": {
+                    "host": "110.110.110.110",
+                    "port": "8888",
+                }
+            });
+        });
+
+        it('should be ok with a suffix tag "@test"', async () => {
+            await config.load('conf/l.json', '@test');
+            config.config.should.containDeep({
+                "server": {
+                    "host": "127.0.0.1",
+                    "port": "8888",
+                }
+            });
+        });
+
+        it('should be ok with a regular expression tag /:test$/', async () => {
+            await config.load('conf/l.json', [/\:test$/]);
+            config.config.should.containDeep({
+                "server": {
+                    "host": "192.168.0.2",
+                    "port": "8800",
+                }
+            });
+        });
+        
+    });
+
 });

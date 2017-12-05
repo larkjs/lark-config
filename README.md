@@ -31,6 +31,14 @@ config.delete("path.to.file.foo.bar");
 config.set("path.to.file.foo.bar", "new-value");
 ```
 
+If you want to switch the config by environment, use the second param as tag:
+
+```
+await config.load('configs', '@online');
+```
+
+It will use config named as `foo@online` rather than `foo` if exists
+
 
 [npm-image]: https://img.shields.io/npm/v/lark-config.svg?style=flat-square
 [npm-url]: https://npmjs.org/package/lark-config

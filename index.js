@@ -37,14 +37,16 @@ class LarkConfig {
 
     /**
      * Use object configs
+     * @param   {array}   tags    Config filter tags. If config key matches `{name}.{tag}`, it
+     *                            will be used to replace the config for `{name}`
      **/
-    use(object) {
+    use(object, tags = []) {
         debug('use object');
         assert(object instanceof Object, 'Using an invalid config');
         if (object instanceof LarkConfig) {
             object = object.config;
         }
-        object = reorganize(object, this.options.sep);
+        object = reorganize(object, this.options.sep, tags);
         this.config = misc.object.merge(this.config, object);
         return this;
     }
@@ -52,13 +54,13 @@ class LarkConfig {
     /**
      * Load configs from a directory or a file
      **/
-    async load(descriptor_path) {
+    async load(descriptor_path, tags) {
         assert('string' === typeof descriptor_path, 'Descriptor path must be a string');
         debug(`loading [${descriptor_path}]`);
         const descriptor = new Descriptor(descriptor_path);
         await descriptor.ready();
         const object = await this._parse(descriptor.tree);
-        return this.use(object);
+        return this.use(object, tags);
     }
 
     /**
@@ -145,14 +147,27 @@ class LarkConfig {
 }
 
 
-function reorganize(object, sep = '.') {
+function reorganize(object, sep, tags) {
     if (!(object instanceof Object) || object instanceof Function) {
         return object;
     }
+    if (!Array.isArray(tags)) {
+        tags = [tags];
+    }
     const result = Array.isArray(object) ? [] : {};
     for (const name in object) {
-        const value = reorganize(object[name]);
-        misc.object.setByKeys(result, value, ...(misc.path.split(name, sep)));
+        const value = reorganize(object[name], sep, tags);
+        debug('name before', name, sep);
+        debug('keys before', misc.path.split(name, sep));
+        const keys = misc.path.split(name, sep).map(key => {
+            for (const tag of tags) {
+                key = tag instanceof RegExp && key.match(tag) ? key.replace(tag, '') :
+                      'string' === typeof tag && key.endsWith(tag) ? key.slice(0, - tag.length) : key;
+            }
+            return key;
+        });
+        debug('keys after', keys);
+        misc.object.setByKeys(result, value, ...keys);
     }
     return result;
 }
