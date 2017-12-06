@@ -127,7 +127,7 @@ describe('loading config with customized parser', () => {
         });
     });
 
-    describe('should be ok for ".local" as local config', () => {
+    describe('should be ok switching config with tags', () => {
         let config = null;
         before(() => {
             config = new Config();
