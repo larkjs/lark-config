@@ -28,6 +28,7 @@ rules:
         - async
         - basename
         - configs
+        - detag
         - dev
         - directoryfiles
         - extname

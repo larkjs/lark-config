@@ -151,25 +151,45 @@ function reorganize(object, sep, tags) {
     if (!(object instanceof Object) || object instanceof Function) {
         return object;
     }
+    debug('reorganize');
     if (!Array.isArray(tags)) {
         tags = [tags];
     }
+    tags = tags.filter(tag => ('string' === typeof tag && '' !== tag.trim()) || tag instanceof RegExp);
     const result = Array.isArray(object) ? [] : {};
+    const overwrites = new Set();
     for (const name in object) {
         const value = reorganize(object[name], sep, tags);
-        debug('name before', name, sep);
-        debug('keys before', misc.path.split(name, sep));
-        const keys = misc.path.split(name, sep).map(key => {
-            for (const tag of tags) {
-                key = tag instanceof RegExp && key.match(tag) ? key.replace(tag, '') :
-                      'string' === typeof tag && key.endsWith(tag) ? key.slice(0, - tag.length) : key;
-            }
-            return key;
-        });
-        debug('keys after', keys);
+        const keys = misc.path.split(name, sep);
+        debug(`setting ${keys}`);
         misc.object.setByKeys(result, value, ...keys);
+        const detag_keys = get_detag_keys(keys, tags);
+        if (Array.isArray(detag_keys) && detag_keys.length > 0) {
+            overwrites.add({ detag_keys, value, keys });
+        }
+    }
+    for (const { detag_keys, value, keys } of overwrites.values()) {
+        debug(`overwriting ${detag_keys} with ${keys}`);
+        misc.object.setByKeys(result, value, ...detag_keys);
     }
     return result;
+}
+
+
+function get_detag_keys(keys, tags) {
+    let detag =  false;
+    keys = keys.map(key => {
+        let detag_key = key;
+        for (const tag of tags) {
+            detag_key =
+                (tag instanceof RegExp && detag_key.match(tag)) ? detag_key = detag_key.replace(tag, '') :
+                ('string' === typeof tag && detag_key.endsWith(tag)) ? detag_key = detag_key.slice(0, - tag.length) :
+                detag_key;
+        }
+        detag = detag || (key !== detag_key);
+        return detag_key;
+    });
+    return detag ? keys : false;
 }
 
 
