@@ -1,5 +1,7 @@
 /**
- * Lark Config, a config loader and parser
+ * Lark Config, provides an easy way to access and manipulate configs from object/files
+ *
+ * @copyright - ALL RIGHTS RESERVED lark.js team
  **/
 'use strict';
 
@@ -8,7 +10,7 @@ const debug       = require('debug')('lark-config');
 const fs          = require('fs');
 const misc        = require('vi-misc');
 const path        = require('path');
-const parse_json  = require('parse-json');
+const parseJson   = require('parse-json');
 const yaml        = require('js-yaml');
 const Descriptor  = require('directoryfiles');
 misc.async.all(fs);
@@ -16,9 +18,9 @@ misc.async.all(fs);
 
 class LarkConfig {
 
-    static get LOAD_MODULE() { return load_module; }
-    static get LOAD_JSON() { return load_json; }
-    static get LOAD_YAML() { return load_yaml; }
+    static get LOAD_MODULE() { return loadModule; }
+    static get LOAD_JSON() { return loadJson; }
+    static get LOAD_YAML() { return loadYaml; }
 
     constructor(options = {}) {
         debug('construct');
@@ -54,55 +56,55 @@ class LarkConfig {
     /**
      * Load configs from a directory or a file
      **/
-    async load(descriptor_path, tags) {
-        assert('string' === typeof descriptor_path, 'Descriptor path must be a string');
-        debug(`loading [${descriptor_path}]`);
-        const descriptor = new Descriptor(descriptor_path);
+    async load(descriptorPath, tags) {
+        assert('string' === typeof descriptorPath, 'Descriptor path must be a string');
+        debug(`loading [${descriptorPath}]`);
+        const descriptor = new Descriptor(descriptorPath);
         await descriptor.ready();
         const object = await this._parse(descriptor.tree);
         return this.use(object, tags);
     }
 
     /**
-     * Get the config value by key_chain
+     * Get the config value by keyChain
      **/
-    get(key_chain) {
+    get(keyChain) {
         const sep = this.options.sep;
-        return misc.object.getByKeys(this.config, ...(misc.path.split(key_chain, sep)));
+        return misc.object.getByKeys(this.config, ...(misc.path.split(keyChain, sep)));
     }
 
     /**
-     * Get the config by key_chain
+     * Get the config by keyChain
      **/
-    getConfig(key_chain) {
-        const value = this.get(key_chain);
+    getConfig(keyChain) {
+        const value = this.get(keyChain);
         return value instanceof Object ? new LarkConfig().use(value) : value;
     }
 
     /**
-     * Set the config value by key_chain
+     * Set the config value by keyChain
      **/
-    set(key_chain, value) {
+    set(keyChain, value) {
         const sep = this.options.sep;
         value = value instanceof LarkConfig ? value.config : value;
-        misc.object.setByKeys(this.config, value, ...(misc.path.split(key_chain, sep)));
+        misc.object.setByKeys(this.config, value, ...(misc.path.split(keyChain, sep)));
         return this;
     }
 
     /**
      * Check if a config is set
      **/
-    has(key_chain) {
+    has(keyChain) {
         const sep = this.options.sep;
-        return misc.object.hasByKeys(this.config, ...(misc.path.split(key_chain, sep)));
+        return misc.object.hasByKeys(this.config, ...(misc.path.split(keyChain, sep)));
     }
 
     /**
-     * Delete a config by key_chain
+     * Delete a config by keyChain
      **/
-    delete(key_chain) {
+    delete(keyChain) {
         const sep = this.options.sep;
-        misc.object.removeByKeys(this.config, ...(misc.path.split(key_chain, sep)));
+        misc.object.removeByKeys(this.config, ...(misc.path.split(keyChain, sep)));
         return this;
     }
 
@@ -136,12 +138,12 @@ class LarkConfig {
     /**
      * Load file
      **/
-    async _loadFile(file_path) {
-        const extname = path.extname(file_path).slice(1).toLowerCase();
+    async _loadFile(filePath) {
+        const extname = path.extname(filePath).slice(1).toLowerCase();
         if (!(this.fileLoaders[extname] instanceof Function)) {
             return null;
         }
-        return await this.fileLoaders[extname](file_path);
+        return await this.fileLoaders[extname](filePath);
     }
 
 }
@@ -163,57 +165,57 @@ function reorganize(object, sep, tags) {
         const keys = misc.path.split(name, sep);
         debug(`setting ${keys}`);
         misc.object.setByKeys(result, value, ...keys);
-        const detag_keys = get_detag_keys(keys, tags);
-        if (Array.isArray(detag_keys) && detag_keys.length > 0) {
-            overwrites.add({ detag_keys, value, keys });
+        const detagKeys = getDetagKeys(keys, tags);
+        if (Array.isArray(detagKeys) && detagKeys.length > 0) {
+            overwrites.add({ detagKeys, value, keys });
         }
     }
-    for (const { detag_keys, value, keys } of overwrites.values()) {
-        debug(`overwriting ${detag_keys} with ${keys}`);
-        misc.object.setByKeys(result, value, ...detag_keys);
+    for (const { detagKeys, value, keys } of overwrites.values()) {
+        debug(`overwriting ${detagKeys} with ${keys}`);
+        misc.object.setByKeys(result, value, ...detagKeys);
     }
     return result;
 }
 
 
-function get_detag_keys(keys, tags) {
+function getDetagKeys(keys, tags) {
     let detag =  false;
     keys = keys.map(key => {
-        let detag_key = key;
+        let detagKey = key;
         for (const tag of tags) {
-            detag_key =
-                (tag instanceof RegExp && detag_key.match(tag)) ? detag_key = detag_key.replace(tag, '') :
-                ('string' === typeof tag && detag_key.endsWith(tag)) ? detag_key = detag_key.slice(0, - tag.length) :
-                detag_key;
+            detagKey =
+                (tag instanceof RegExp && detagKey.match(tag)) ? detagKey = detagKey.replace(tag, '') :
+                ('string' === typeof tag && detagKey.endsWith(tag)) ? detagKey = detagKey.slice(0, - tag.length) :
+                detagKey;
         }
-        detag = detag || (key !== detag_key);
-        return detag_key;
+        detag = detag || (key !== detagKey);
+        return detagKey;
     });
     return detag ? keys : false;
 }
 
 
-async function load_yaml(file_path) {
-    const rel_path = path.relative(misc.path.root, file_path);
-    debug(`load yaml [${rel_path}]`);
-    const content = await fs.readFileAsync(file_path);
+async function loadYaml(filePath) {
+    const relPath = path.relative(misc.path.root, filePath);
+    debug(`load yaml [${relPath}]`);
+    const content = await fs.readFileAsync(filePath);
     const object = yaml.safeLoad(content);
     return object;
 }
 
 
-async function load_module(file_path) {
-    const rel_path = path.relative(misc.path.root, file_path);
-    debug(`load module [${rel_path}]`);
-    return require(file_path);
+async function loadModule(filePath) {
+    const relPath = path.relative(misc.path.root, filePath);
+    debug(`load module [${relPath}]`);
+    return require(filePath);
 }
 
 
-async function load_json(file_path) {
-    const rel_path = path.relative(misc.path.root, file_path);
-    debug(`load json [${rel_path}]`);
-    const content = await fs.readFileAsync(file_path);
-    const object = parse_json(content);
+async function loadJson(filePath) {
+    const relPath = path.relative(misc.path.root, filePath);
+    debug(`load json [${relPath}]`);
+    const content = await fs.readFileAsync(filePath);
+    const object = parseJson(content);
     return object;
 }
 
