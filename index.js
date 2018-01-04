@@ -70,7 +70,7 @@ class LarkConfig {
      **/
     get(keyChain) {
         const sep = this.options.sep;
-        return misc.object.getByKeys(this.config, ...(misc.path.split(keyChain, sep)));
+        return misc.object.clone(misc.object.getByKeys(this.config, ...(misc.path.split(keyChain, sep))));
     }
 
     /**
