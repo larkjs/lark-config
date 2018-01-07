@@ -134,7 +134,7 @@ describe('loading config with customized parser', () => {
         });
 
         it('should be ok without tags', async () => {
-            await config.load('conf/l.json');
+            await config.use('conf/l.json');
             config.config.should.containDeep({
                 "server": {
                     "host": "110.110.110.110",

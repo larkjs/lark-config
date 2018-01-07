@@ -42,8 +42,12 @@ class LarkConfig {
      * @param   {array}   tags    Config filter tags. If config key matches `{name}.{tag}`, it
      *                            will be used to replace the config for `{name}`
      **/
-    use(object, tags = []) {
+    use(target, tags = []) {
+        if ('string' === typeof target) {
+            return this.load(target, tags);
+        }
         debug('use object');
+        let object = target;
         assert(object instanceof Object, 'Using an invalid config');
         if (object instanceof LarkConfig) {
             object = object.config;
