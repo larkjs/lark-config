@@ -165,4 +165,35 @@ describe('loading config with customized parser', () => {
         
     });
 
+    it('should be ok loading files with dot in name', async () => {
+        const config = new Config();
+        await config.load('conf');
+        config.config.should.containDeep({
+            "a": {
+                "b": {
+                    "c": {
+                        "d": "D",
+                    },
+                    "d": {
+                        "message": "hello"
+                    },
+                },
+            },
+        });
+    });
+
+    it('should be ok loading files with another sep', async () => {
+        const config = new Config({ sep: '/' });
+        await config.load('conf');
+        config.config.should.containDeep({
+            'a.b.c': {
+                'd': 'D',
+            },
+            'a.b': {
+                'd': {
+                    'message': 'hello',
+                }
+            }
+        });
+    });
 });

@@ -133,7 +133,7 @@ class LarkConfig {
         assert(target instanceof Object, 'Invalid type of target');
         const result = {};
         for (let name in target) {
-            const key = path.basename(name, path.extname(name));
+            let key = target[name] instanceof Object ? name : path.basename(name, path.extname(name));
             result[key] = await this._parse(target[name]);
         }
         return result;
