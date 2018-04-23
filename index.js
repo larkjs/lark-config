@@ -128,7 +128,7 @@ class LarkConfig {
      **/
     async _parse(target) {
         if ('string' === typeof target) {
-            return await this._loadFile(target);
+            return this._loadFile(target);
         }
         assert(target instanceof Object, 'Invalid type of target');
         const result = {};
@@ -147,7 +147,7 @@ class LarkConfig {
         if (!(this.fileLoaders[extname] instanceof Function)) {
             return null;
         }
-        return await this.fileLoaders[extname](filePath);
+        return this.fileLoaders[extname](filePath);
     }
 
 }
