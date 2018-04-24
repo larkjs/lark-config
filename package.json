@@ -1,6 +1,6 @@
 {
   "name": "lark-config",
-  "version": "3.2.4",
+  "version": "3.3.0",
   "description": "lark config module",
   "main": "index.js",
   "engines": {
@@ -19,6 +19,7 @@
     "directoryfiles": "^2.1.0",
     "js-yaml": "^3.10.0",
     "parse-json": "^4.0.0",
+    "replace-string": "^1.1.0",
     "vi-misc": "^1.13.2"
   },
   "devDependencies": {

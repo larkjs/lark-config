@@ -11,6 +11,7 @@ const fs          = require('fs');
 const misc        = require('vi-misc');
 const path        = require('path');
 const parseJson   = require('parse-json');
+const replace     = require('replace-string');
 const yaml        = require('js-yaml');
 const Descriptor  = require('directoryfiles');
 misc.async.all(fs);
@@ -74,7 +75,7 @@ class LarkConfig {
      **/
     get(keyChain) {
         const sep = this.options.sep;
-        return misc.object.clone(misc.object.getByKeys(this.config, ...(misc.path.split(keyChain, sep))));
+        return misc.object.clone(misc.object.getByKeys(this.config, ...parseKeyChain(keyChain, sep)));
     }
 
     /**
@@ -91,7 +92,7 @@ class LarkConfig {
     set(keyChain, value) {
         const sep = this.options.sep;
         value = value instanceof LarkConfig ? value.config : value;
-        misc.object.setByKeys(this.config, value, ...(misc.path.split(keyChain, sep)));
+        misc.object.setByKeys(this.config, value, ...parseKeyChain(keyChain, sep));
         return this;
     }
 
@@ -100,7 +101,7 @@ class LarkConfig {
      **/
     has(keyChain) {
         const sep = this.options.sep;
-        return misc.object.hasByKeys(this.config, ...(misc.path.split(keyChain, sep)));
+        return misc.object.hasByKeys(this.config, ...parseKeyChain(keyChain, sep));
     }
 
     /**
@@ -108,7 +109,7 @@ class LarkConfig {
      **/
     delete(keyChain) {
         const sep = this.options.sep;
-        misc.object.removeByKeys(this.config, ...(misc.path.split(keyChain, sep)));
+        misc.object.removeByKeys(this.config, ...parseKeyChain(keyChain, sep));
         return this;
     }
 
@@ -166,7 +167,8 @@ function reorganize(object, sep, tags) {
     const overwrites = new Set();
     for (const name in object) {
         const value = reorganize(object[name], sep, tags);
-        const keys = misc.path.split(name, sep);
+        // const keys = misc.path.split(name, sep);
+        const keys = [name];
         debug(`setting ${keys}`);
         misc.object.setByKeys(result, value, ...keys);
         const detagKeys = getDetagKeys(keys, tags);
@@ -177,6 +179,7 @@ function reorganize(object, sep, tags) {
     for (const { detagKeys, value, keys } of overwrites.values()) {
         debug(`overwriting ${detagKeys} with ${keys}`);
         misc.object.setByKeys(result, value, ...detagKeys);
+        // misc.object.removeByKeys(result, ...keys);
     }
     return result;
 }
@@ -221,6 +224,10 @@ async function loadJson(filePath) {
     const content = await fs.readFileAsync(filePath);
     const object = parseJson(content);
     return object;
+}
+
+function parseKeyChain(keyChain, sep) {
+    return misc.path.split(keyChain, sep).map(key => replace(key, '\\' + sep, sep));
 }
 
 module.exports = LarkConfig;

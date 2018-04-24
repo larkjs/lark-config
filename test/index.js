@@ -23,9 +23,7 @@ describe('common use', () => {
                     'key-b-1': 'content-b-1',
                     'key-b-2': 'content-b-2',
                 },
-                'key-c': {
-                    'key-d': 'value-d',
-                },
+                'key-c.key-d': 'value-d',
             },
             'b': {
                 'key-b': 'content-b',
@@ -61,9 +59,7 @@ describe('common use', () => {
                 'key-b-1': 'content-b-1',
                 'key-b-2': 'content-b-2',
             },
-            'key-c': {
-                'key-d': 'value-d',
-            },
+            'key-c.key-d':  'value-d',
         });
         config.get('b.key-b').should.be.exactly('content-b');
     });
@@ -128,12 +124,9 @@ describe('loading config with customized parser', () => {
     });
 
     describe('should be ok switching config with tags', () => {
-        let config = null;
-        before(() => {
-            config = new Config();
-        });
 
         it('should be ok without tags', async () => {
+            const config = new Config();
             await config.use('conf/l.json');
             config.config.should.containDeep({
                 "server": {
@@ -144,6 +137,7 @@ describe('loading config with customized parser', () => {
         });
 
         it('should be ok with a suffix tag "@test"', async () => {
+            const config = new Config();
             await config.load('conf/l.json', '@test');
             config.config.should.containDeep({
                 "server": {
@@ -154,6 +148,7 @@ describe('loading config with customized parser', () => {
         });
 
         it('should be ok with a regular expression tag /:test$/', async () => {
+            const config = new Config();
             await config.load('conf/l.json', [/\:test$/]);
             config.config.should.containDeep({
                 "server": {
@@ -168,32 +163,36 @@ describe('loading config with customized parser', () => {
     it('should be ok loading files with dot in name', async () => {
         const config = new Config();
         await config.load('conf');
+        config.set('a\\.c\\.d.hello', 'world');
         config.config.should.containDeep({
-            "a": {
-                "b": {
-                    "c": {
-                        "d": "D",
-                    },
-                    "d": {
-                        "message": "hello"
-                    },
-                },
+            "a.b": {
+                "d": {
+                    "message": "hello",
+                }
+            },
+            "a.b.c": {
+                "d": "D",
+            },
+            "a.c.d": {
+                "hello": "world",
             },
         });
+        config.get('a\\.b.d.message').should.be.exactly('hello');
     });
 
     it('should be ok loading files with another sep', async () => {
         const config = new Config({ sep: '/' });
         await config.load('conf');
         config.config.should.containDeep({
-            'a.b.c': {
-                'd': 'D',
-            },
             'a.b': {
                 'd': {
                     'message': 'hello',
                 }
+            },
+            'a.b.c': {
+                'd': 'D',
             }
         });
+        config.get('a.b/d/message').should.be.exactly('hello');
     });
 });
