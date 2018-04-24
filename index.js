@@ -5,6 +5,7 @@
  **/
 'use strict';
 
+const _           = require('lodash');
 const assert      = require('assert');
 const debug       = require('debug')('lark-config');
 const fs          = require('fs');
@@ -163,7 +164,7 @@ function reorganize(object, sep, tags) {
         tags = [tags];
     }
     tags = tags.filter(tag => ('string' === typeof tag && '' !== tag.trim()) || tag instanceof RegExp);
-    const result = Array.isArray(object) ? [] : {};
+    let result = Array.isArray(object) ? [] : {};
     const overwrites = new Set();
     for (const name in object) {
         const value = reorganize(object[name], sep, tags);
@@ -178,7 +179,9 @@ function reorganize(object, sep, tags) {
     }
     for (const { detagKeys, value, keys } of overwrites.values()) {
         debug(`overwriting ${detagKeys} with ${keys}`);
-        misc.object.setByKeys(result, value, ...detagKeys);
+        const object = {};
+        misc.object.setByKeys(object, value, ...detagKeys);
+        result = _.defaultsDeep(object, result);
         // misc.object.removeByKeys(result, ...keys);
     }
     return result;

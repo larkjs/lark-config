@@ -152,7 +152,7 @@ describe('loading config with customized parser', () => {
             await config.load('conf/l.json', [/\:test$/]);
             config.config.should.containDeep({
                 "server": {
-                    "host": "192.168.0.2",
+                    "host": "110.110.110.110",
                     "port": "8800",
                 }
             });
