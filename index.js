@@ -149,7 +149,12 @@ class LarkConfig {
         if (!(this.fileLoaders[extname] instanceof Function)) {
             return null;
         }
-        return this.fileLoaders[extname](filePath);
+        try {
+            return this.fileLoaders[extname](filePath);
+        }
+        catch (e) {
+            throw new Error(`Can not load file ${filePath}, error message: ${e.message}`);
+        }
     }
 
 }
